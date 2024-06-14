@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Criar Conta</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2 class="page-title">Criar Conta</h2>
+        <form action="/{{ bank }}/criar_conta" method="POST" id="form_criar_conta">
+            <input type="hidden" name="bank" value="{{ bank }}">
+            
+            <label for="tipo_conta">Tipo de Conta:</label>
+            <select id="tipo_conta" name="tipo_conta" onchange="mostrarCamposAdicionais(this.value)">
+                <option value="">Selecione...</option>
+                <option value="PFI">Conta Individual</option>
+                <option value="PFC">Conta Conjunta</option>
+                <option value="PJ">Conta Jurídica</option>
+            </select>
+
+            <div id="campos_adicionais_individual" style="display: none;">
+                <label for="nome">Nome:</label>
+                <input type="text" id="nome" name="nome">
+                <label for="cpf_cnpj">CPF:</label>
+                <input type="text" id="cpf_cnpj" name="cpf_cnpj">
+                <label for="senha">Senha:</label>
+                <input type="password" id="senha" name="senha">
+            </div>
+
+            <div id="campos_adicionais_conjunta" style="display: none;">
+                <label for="quantidade_titulares">Quantidade de Titulares:</label>
+                <select id="quantidade_titulares" name="quantidade_titulares" onchange="mostrarCamposTitulares(this.value)">
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                </select>
+                <br><br>
+                <div id="campos_titulares">
+                    <!-- Aqui serão inseridos dinamicamente os campos para cada titular -->
+                </div>
+                <label for="senha_conjunta">Senha da Conta Conjunta:</label>
+                <input type="password" id="senha_conjunta" name="senha_conjunta">
+            </div>
+
+            <div id="campos_adicionais_juridica" style="display: none;">
+                <label for="razao_social">Razão Social:</label>
+                <input type="text" id="razao_social" name="razao_social">
+                <label for="cnpj">CNPJ:</label>
+                <input type="text" id="cnpj" name="cnpj">
+                <label for="senha_juridica">Senha:</label>
+                <input type="password" id="senha_juridica" name="senha_juridica">
+            </div>
+
+            <button type="submit" class="nav-button" onclick="navigate('criar_conta')">Criar Conta</button>
+        </form>
+
+        <!-- Div para exibir mensagem de sucesso e informações da conta -->
+        <div id="mensagem_sucesso" style="display: none;">
+            <h3>Conta criada com sucesso!</h3>
+            <p>Agência: <span id="agencia_conta"></span></p>
+            <p>Conta: <span id="numero_conta"></span></p>
+        </div>
+    </div>
+
+    <script>
+        function mostrarCamposAdicionais(tipoConta) {
+            document.getElementById('campos_adicionais_individual').style.display = 'none';
+            document.getElementById('campos_adicionais_conjunta').style.display = 'none';
+            document.getElementById('campos_adicionais_juridica').style.display = 'none';
+
+            if (tipoConta === 'PFI') {
+                document.getElementById('campos_adicionais_individual').style.display = 'block';
+            } else if (tipoConta === 'PFC') {
+                document.getElementById('campos_adicionais_conjunta').style.display = 'block';
+            } else if (tipoConta === 'PJ') {
+                document.getElementById('campos_adicionais_juridica').style.display = 'block';
+            }
+        }
+
+        function mostrarCamposTitulares(quantidadeTitulares) {
+            var camposTitulares = document.getElementById('campos_titulares');
+            camposTitulares.innerHTML = ''; // Limpa os campos anteriores
+
+            for (var i = 1; i <= quantidadeTitulares; i++) {
+                var divTitular = document.createElement('div');
+                divTitular.classList.add('titular');
+
+                var labelNome = document.createElement('label');
+                labelNome.textContent = 'Nome do Titular ' + i + ':';
+                divTitular.appendChild(labelNome);
+
+                var inputNome = document.createElement('input');
+                inputNome.type = 'text';
+                inputNome.id = 'nome_titular' + i;
+                inputNome.name = 'nome_titular' + i;
+                inputNome.placeholder = 'Nome do Titular ' + i;
+                divTitular.appendChild(inputNome);
+
+                var labelCPF = document.createElement('label');
+                labelCPF.textContent = 'CPF do Titular ' + i + ':';
+                divTitular.appendChild(labelCPF);
+
+                var inputCPF = document.createElement('input');
+                inputCPF.type = 'text';
+                inputCPF.id = 'cpf_cnpj_titular' + i;
+                inputCPF.name = 'cpf_cnpj_titular' + i;
+                inputCPF.placeholder = 'CPF do Titular ' + i;
+                divTitular.appendChild(inputCPF);
+
+                camposTitulares.appendChild(divTitular);
+            }
+        }
+
+        // Função para mostrar a mensagem de sucesso e informações da conta
+        function mostrarMensagemSucesso(agencia, numeroConta) {
+            var mensagemSucesso = document.getElementById('mensagem_sucesso');
+            var agenciaConta = document.getElementById('agencia_conta');
+            var numeroContaSpan = document.getElementById('numero_conta');
+
+            agenciaConta.textContent = agencia;
+            numeroContaSpan.textContent = numeroConta;
+
+            mensagemSucesso.style.display = 'block';
+        }
+
+        function navigate(page) {
+            const bank = document.querySelector('input[name="bank"]').value;
+            if (bank) {
+                window.location.href = `/${bank}/${page}`;
+            } else {
+                alert('Por favor, selecione um banco primeiro.');
+            }
+        }
+
+        function updateColors() {
+            const bank = document.querySelector('input[name="bank"]').value;
+            const pageTitle = document.querySelector('.page-title');
+            const buttons = document.querySelectorAll('.nav-button');
+
+            // Remove todas as classes de banco dos elementos relevantes
+            pageTitle.classList.remove('bradesco-bg', 'neon-bg', 'picpay-bg', 'default-background');
+            buttons.forEach(button => button.classList.remove('bradesco', 'neon', 'picpay', 'default-background'));
+
+            // Adiciona a classe correspondente ao banco selecionado ou a classe padrão
+            if (bank === 'bradesco' || bank === 'neon' || bank === 'picpay') {
+                pageTitle.classList.add(`${bank}-bg`);
+                buttons.forEach(button => button.classList.add(bank));
+            } else {
+                pageTitle.classList.add('default-background');
+                buttons.forEach(button => button.classList.add('default-background'));
+            }
+        }
+
+        // Set initial button colors
+        updateColors();
+    </script>
+</body>
+</html>

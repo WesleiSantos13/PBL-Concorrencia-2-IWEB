@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fazer Depósito</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2 class="page-title">Fazer Depósito</h2>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <form action="/{{ bank }}/deposito" method="post">
+            <input type="hidden" name="bank" value="{{ bank }}">
+            
+            <label for="agencia">Agência:</label>
+            <input type="text" id="agencia" name="agencia" required>
+
+            <label for="conta">Conta:</label>
+            <input type="text" id="conta" name="conta" required>
+
+            <label for="valor">Valor:</label>
+            <input type="number" id="valor" name="valor" required>
+
+            <button type="submit" class="nav-button" onclick="navigate('deposito')">Depositar</button>
+        </form>
+    </div>
+
+    <script>
+        function navigate(page) {
+            const bank = document.querySelector('input[name="bank"]').value;
+            if (bank) {
+                window.location.href = `/${bank}/${page}`;
+            } else {
+                alert('Por favor, selecione um banco primeiro.');
+            }
+        }
+
+        function updateColors() {
+            const bank = document.querySelector('input[name="bank"]').value;
+            const pageTitle = document.querySelector('.page-title');
+            const buttons = document.querySelectorAll('.nav-button');
+
+            // Remove todas as classes de banco dos elementos relevantes
+            pageTitle.classList.remove('bradesco-bg', 'neon-bg', 'picpay-bg', 'default-background');
+            buttons.forEach(button => button.classList.remove('bradesco', 'neon', 'picpay', 'default-background'));
+
+            // Adiciona a classe correspondente ao banco selecionado ou a classe padrão
+            if (bank === 'bradesco' || bank === 'neon' || bank === 'picpay') {
+                pageTitle.classList.add(`${bank}-bg`);
+                buttons.forEach(button => button.classList.add(bank));
+            } else {
+                pageTitle.classList.add('default-background');
+                buttons.forEach(button => button.classList.add('default-background'));
+            }
+        }
+
+        // Set initial button colors
+        updateColors();
+    </script>
+</body>
+</html>

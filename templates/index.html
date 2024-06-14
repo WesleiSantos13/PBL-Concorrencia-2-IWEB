@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Banco</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2 id="title">SYSTEM BANK</h2>
+        <form id="select-bank-form">
+            <label for="select-bank">Selecione o Banco:</label>
+            <select id="select-bank" name="select-bank" onchange="updateColors()">
+                <option value="">Selecione...</option>
+                <option value="bradesco">Bradesco</option>
+                <option value="neon">Neon</option>
+                <option value="picpay">PicPay</option>
+            </select>
+        </form>
+        <nav>
+            <ul>
+                <li><a href="#" class="nav-button" onclick="navigate('login')">Fazer login</a></li>
+                <li><a href="#" class="nav-button" onclick="navigate('criar_conta')">Criar conta</a></li>
+                <li><a href="#" class="nav-button" onclick="navigate('deposito')">Fazer depósito</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <script>
+        function navigate(page) {
+            const bank = document.getElementById('select-bank').value;
+            if (bank) {
+                window.location.href = `/${bank}/${page}`;
+            } else {
+                alert('Por favor, selecione um banco primeiro.');
+            }
+        }
+
+        function updateColors() {
+            const bank = document.getElementById('select-bank').value;
+            const buttons = document.querySelectorAll('.nav-button');
+            const title = document.getElementById('title');
+
+            // Remove todas as classes de banco do título e dos botões
+            title.classList.remove('bradesco', 'neon', 'picpay', 'default-background');
+            buttons.forEach(button => button.classList.remove('bradesco', 'neon', 'picpay', 'default-background'));
+
+            // Adiciona a classe correspondente ao banco selecionado ou a classe padrão
+            if (bank === 'bradesco' || bank === 'neon' || bank === 'picpay') {
+                title.classList.add(bank);
+                buttons.forEach(button => button.classList.add(bank));
+            } else {
+                title.classList.add('default-background');
+                buttons.forEach(button => button.classList.add('default-background'));
+            }
+        }
+
+        // Set initial button colors
+        updateColors();
+    </script>
+</body>
+</html>

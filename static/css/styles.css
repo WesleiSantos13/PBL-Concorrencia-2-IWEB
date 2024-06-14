@@ -1,0 +1,146 @@
+/* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #878885; /* Azul claro */
+    margin: 0;
+    padding: 0;
+}
+
+h1, h2 {
+    color: #333;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Navigation Styles */
+nav {
+    text-align: center;
+    margin-top: 20px;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+}
+
+nav ul li {
+    margin-bottom: 10px; /* Espaçamento entre os itens */
+}
+
+.nav-button {
+    display: block;
+    padding: 15px 20px;
+    background-color: #a9a9a9; /* Cinza inicial */
+    border-radius: 5px;
+    color: #fff;
+    font-weight: bold;
+    text-decoration: none;
+    text-align: center;
+    transition: background-color 0.3s;
+}
+
+.nav-button:hover {
+    background-color: #888;
+}
+
+/* Button colors for different banks */
+.nav-button.bradesco {
+    background-color: #b83838; /* Vermelho para Bradesco */
+}
+
+.nav-button.bradesco:hover {
+    background-color: #920202;
+}
+
+.nav-button.neon {
+    background-color: #1a89c4; /* Azul para Neon */
+}
+
+.nav-button.neon:hover {
+    background-color: #044b77;
+}
+
+.nav-button.picpay {
+    background-color: #079407; /* Verde para PicPay */
+}
+
+.nav-button.picpay:hover {
+    background-color: #035808;
+}
+
+/* Form Styles */
+form {
+    max-width: 600px; /* Aumentando a largura máxima do formulário */
+    margin: 20px auto;
+    padding: 30px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+form label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: #333; /* Cor do texto das labels */
+}
+
+form input, form textarea, form select {
+    width: calc(100% - 24px); /* Ajuste para a largura dos inputs considerando o padding */
+    padding: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    box-sizing: border-box; /* Garante que o padding não aumente a largura total */
+}
+
+form button {
+    width: 100%;
+    padding: 12px;
+    background-color: #dc3545;
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+form button:hover {
+    background-color: #c82333;
+}
+
+/* Styling for index.html */
+.index-nav ul {
+    padding: 0;
+}
+
+.index-nav ul li {
+    margin-bottom: 10px; /* Espaçamento entre os itens */
+}
+
+.index-nav ul li a {
+    display: block;
+    padding: 15px 20px;
+    background-color: #dc3545;
+    border-radius: 5px;
+    color: #fff;
+    font-weight: bold;
+    text-decoration: none;
+    text-align: center;
+    transition: background-color 0.3s;
+}
+
+.index-nav ul li a:hover {
+    background-color: #c82333;
+}
