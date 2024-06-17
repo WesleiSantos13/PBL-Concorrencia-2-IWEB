@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Transferência TED</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2>Realizar Transferência TED</h2>
+        <p>Saldo disponível: R$ {{ saldo }}</p>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <form action="{{ url_for('transferencia_ted', bank=bank) }}" method="post">
+            <label for="agencia_destino">Agência Destino:</label>
+            <input type="text" id="agencia_destino" name="agencia_destino" required>
+
+            <label for="conta_destino">Conta Destino:</label>
+            <input type="text" id="conta_destino" name="conta_destino" required>
+
+            <label for="valor">Valor:</label>
+            <input type="number" step="0.01" id="valor" name="valor" required>
+
+            <label for="banco_destino">Banco Destino:</label>
+            <input type="text" id="banco_destino" name="banco_destino" required>
+
+            <button type="submit" class="nav-button">Enviar</button>
+        </form>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('dashboard', bank=bank) }}" class="nav-button {{ bank }}">Voltar ao Dashboard</a></li>
+            </ul>
+        </nav>
+    </div>
+</body>
+</html>

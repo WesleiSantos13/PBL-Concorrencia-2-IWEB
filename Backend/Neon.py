@@ -10,7 +10,7 @@ ip_table_router = 'localhost'
 url_table_router = 'http://' + ip_table_router + ':4326'
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bradesco.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///neon.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -66,10 +66,10 @@ def atualizar_tabela_roteamento(cod_banco, url_banco):
 
 # Configurações do banco
 IP = socket.gethostbyname(socket.gethostname())
-PORT = 9635
+PORT = 9636
 URL_SERVER = f'http://{IP}:{PORT}'
 # Colocando o código do banco e a url na tabela de roteamento
-BANCO_ID = '237'
+BANCO_ID = '536'
 atualizar_tabela_roteamento(BANCO_ID, URL_SERVER)
 
 # Gera uma agência única

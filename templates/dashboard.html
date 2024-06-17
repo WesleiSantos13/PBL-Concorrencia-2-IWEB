@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2>Dashboard</h2>
+        <p><strong>Saldo Disponível:</strong> R$ {{ saldo }}</p>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('deposito', bank=bank) }}" class="nav-button {{ bank }}">Fazer Depósito</a></li>
+                <li><a href="{{ url_for('transferencia_ted', bank=bank) }}" class="nav-button {{ bank }}">Realizar Transferência TED</a></li>
+                <li><a href="{{ url_for('transferencia_pix', bank=bank) }}" class="nav-button {{ bank }}">Realizar Transferência PIX</a></li>
+                <li><a href="{{ url_for('sacar', bank=bank) }}" class="nav-button {{ bank }}">Sacar</a></li>
+
+                <li><a href="{{ url_for('logout') }}" class="nav-button {{ bank }}">Sair</a></li>
+            </ul>
+        </nav>
+    </div>
+</body>
+</html>

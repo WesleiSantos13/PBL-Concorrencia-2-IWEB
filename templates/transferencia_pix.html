@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Transferência PIX</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2>Realizar Transferência PIX</h2>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <form action="{{ url_for('transferencia_pix', bank=bank) }}" method="post">
+            <label for="chave_pix_destino">Chave PIX de Destino:</label>
+            <input type="text" id="chave_pix_destino" name="chave_pix_destino" required>
+
+            <h3>Contas Vinculadas</h3>
+            {% if contas %}
+                {% for conta in contas %}
+                    <div>
+                        <input type="hidden" name="contas_origem" value="{{ conta['banco'] }},{{ conta['agencia'] }},{{ conta['conta'] }},{{ conta['saldo'] }}">
+                        <p>Banco: {{ conta['banco'] }}, Agência: {{ conta['agencia'] }}, Conta: {{ conta['conta'] }}, Saldo: {{ conta['saldo'] }}</p>
+                        <label for="valor_{{ conta['banco'] }}_{{ conta['agencia'] }}_{{ conta['conta'] }}">Valor a Transferir:</label>
+                        <input type="number" step="0.01" id="valor_{{ conta['banco'] }}_{{ conta['agencia'] }}_{{ conta['conta'] }}" name="valor_{{ conta['banco'] }}_{{ conta['agencia'] }}_{{ conta['conta'] }}">
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>Nenhuma conta encontrada para o CPF/CNPJ fornecido.</p>
+            {% endif %}
+
+            <button type="submit" class="nav-button">Enviar</button>
+        </form>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('dashboard', bank=bank) }}" class="nav-button {{ bank }}">Voltar ao Dashboard</a></li>
+            </ul>
+        </nav>
+    </div>
+</body>
+</html>
