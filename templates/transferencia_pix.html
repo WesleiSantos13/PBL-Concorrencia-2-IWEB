@@ -24,7 +24,7 @@
                 {% for conta in contas %}
                     <div>
                         <input type="hidden" name="contas_origem" value="{{ conta['banco'] }},{{ conta['agencia'] }},{{ conta['conta'] }},{{ conta['saldo'] }}">
-                        <p>Banco: {{ conta['banco'] }}, Agência: {{ conta['agencia'] }}, Conta: {{ conta['conta'] }}, Saldo: {{ conta['saldo'] }}</p>
+                        <p>Banco: {{ conta['banco'] }}, Agência: {{ conta['agencia'] }}, Conta: {{ conta['conta'] }}, Saldo: R$ {{ conta['saldo'] }}</p>
                         <label for="valor_{{ conta['banco'] }}_{{ conta['agencia'] }}_{{ conta['conta'] }}">Valor a Transferir:</label>
                         <input type="number" step="0.01" id="valor_{{ conta['banco'] }}_{{ conta['agencia'] }}_{{ conta['conta'] }}" name="valor_{{ conta['banco'] }}_{{ conta['agencia'] }}_{{ conta['conta'] }}">
                     </div>

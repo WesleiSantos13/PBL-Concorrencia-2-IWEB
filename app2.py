@@ -310,76 +310,7 @@ def sacar(bank):
     return render_template('sacar.html', bank=bank, saldo=saldo)
 
 
-@app.route('/<bank>/minhas_chaves_pix', methods=['GET'])
-def minhas_chaves_pix(bank):
-    base_url = bank_urls.get(bank)
-    if not base_url:
-        flash('Banco não encontrado.', 'error')
-        return redirect(url_for('dashboard', bank=bank))
 
-    agencia = session.get('agencia')
-    conta = session.get('conta')
-
-    response = requests.get(f'{base_url}/pix/visualizar', params={'agencia': agencia, 'conta': conta})
-    if response.status_code == 200:
-        chaves_pix = response.json().get('chaves_pix', {})
-    else:
-        flash('Erro ao visualizar chaves PIX.', 'error')
-        chaves_pix = {}
-
-    return render_template('minhas_chaves_pix.html', bank=bank, chaves=chaves_pix)
-
-@app.route('/<bank>/cadastrar_chave_pix', methods=['POST'])
-def cadastrar_chave_pix(bank):
-    base_url = bank_urls.get(bank)
-    if not base_url:
-        flash('Banco não encontrado.', 'error')
-        return redirect(url_for('minhas_chaves_pix', bank=bank))
-
-    agencia = session.get('agencia')
-    conta = session.get('conta')
-    tipo_chave = request.form['tipo_chave']
-    chave_pix = request.form['valor_chave']
-
-    dados = {
-        'agencia': agencia,
-        'conta': conta,
-        'chave_pix': chave_pix,
-        'tipo_chave': tipo_chave
-    }
-
-    response = requests.post(f'{base_url}/pix/cadastrar', json=dados)
-    if response.status_code == 200:
-        flash('Chave PIX cadastrada com sucesso!', 'success')
-    else:
-        flash('Erro ao cadastrar chave PIX.', 'error')
-
-    return redirect(url_for('minhas_chaves_pix', bank=bank))
-
-@app.route('/<bank>/apagar_chave_pix', methods=['POST'])
-def apagar_chave_pix(bank):
-    base_url = bank_urls.get(bank)
-    if not base_url:
-        flash('Banco não encontrado.', 'error')
-        return redirect(url_for('minhas_chaves_pix', bank=bank))
-
-    agencia = session.get('agencia')
-    conta = session.get('conta')
-    tipo_chave = request.form['tipo_chave']
-
-    dados = {
-        'agencia': agencia,
-        'conta': conta,
-        'tipo_chave': tipo_chave
-    }
-
-    response = requests.post(f'{base_url}/pix/apagar', json=dados)
-    if response.status_code == 200:
-        flash('Chave PIX apagada com sucesso!', 'success')
-    else:
-        flash('Erro ao apagar chave PIX.', 'error')
-
-    return redirect(url_for('minhas_chaves_pix', bank=bank))
 
 
 @app.route('/logout')
@@ -391,4 +322,4 @@ def logout():
 
 
 if __name__ == '__main__':
-    app.run(port=9999, host='172.31.96.1', debug=True)
+    app.run(port=9991, host='172.31.96.1', debug=True)

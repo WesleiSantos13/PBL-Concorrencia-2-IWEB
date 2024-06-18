@@ -21,6 +21,42 @@ h1, h2 {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
+.grid-container {
+    display: grid;
+    grid-template-columns: 1fr auto; /* Duas colunas: uma flexível e uma automática para os botões */
+    gap: 10px; /* Reduzindo o espaçamento vertical entre os itens */
+}
+
+
+.grid-item {
+    padding: 5px; /* Reduzindo o padding para diminuir o espaço interno */
+    background-color: #f1f1f1;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%; /* Definindo a largura para ocupar toda a largura disponível */
+    height: 30px; /* Definindo uma altura fixa para cada item do grid */
+    margin-bottom: 10px; /* Adicionando um espaço entre os itens do grid */
+}
+
+
+/* Button Styles */
+.small-button {
+    font-size: 12px; /* Reduz o tamanho do texto */
+    padding: 5px 10px; /* Reduz o espaçamento interno */
+    background-color: #f44336; /* Cor de fundo */
+    color: rgb(248, 243, 243); /* Cor do texto */
+    /*border: none; /* Remove a borda */
+    /*border-radius: 4px; /* Arredonda os cantos */
+    cursor: pointer; /* Adiciona um cursor de ponteiro */
+}
+
+.small-button:hover {
+    background-color: #d32f2f; /* Cor de fundo ao passar o mouse */
+}
+
+
 /* Navigation Styles */
 nav {
     text-align: center;

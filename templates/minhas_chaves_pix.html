@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Minhas Chaves PIX</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2>Minhas Chaves PIX</h2>
+        
+        <!-- Exibir chaves PIX -->
+        <h3>Chaves PIX Registradas</h3>
+        {% if chaves %}
+            <div class="grid-container">
+                {% for tipo_chave, valor_chave in chaves.items() %}
+                    <div class="grid-item">{{ tipo_chave }}: {{ valor_chave }}</div>
+                    <div class="grid-item">
+                        <form action="{{ url_for('apagar_chave_pix', bank=bank) }}" method="post" style="display:inline;">
+                            <input type="hidden" name="tipo_chave" value="{{ tipo_chave }}">
+                            <button type="submit" class="small-button">Apagar</button>
+                        </form>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>Nenhuma chave PIX registrada.</p>
+        {% endif %}
+
+        <!-- Formulário para cadastrar nova chave PIX -->
+        <h3>Cadastrar Nova Chave PIX</h3>
+        <form action="{{ url_for('cadastrar_chave_pix', bank=bank) }}" method="post">
+            <label for="tipo_chave">Tipo de Chave:</label>
+            <select id="tipo_chave" name="tipo_chave" required>
+                <option value="">Selecione...</option>
+                <option value="Telefone">Telefone</option>
+                <option value="Email">Email</option>
+                <option value="Aleatória">Chave Aleatória</option>
+            </select>
+            
+            <label for="valor_chave">Valor da Chave:</label>
+            <input type="text" id="valor_chave" name="valor_chave" required>
+            
+            <button type="submit">Cadastrar</button>
+        </form>
+        
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('dashboard', bank=bank) }}" class="nav-button {{ bank }}">Voltar ao Dashboard</a></li>
+            </ul>
+        </nav>
+    </div>
+</body>
+</html>

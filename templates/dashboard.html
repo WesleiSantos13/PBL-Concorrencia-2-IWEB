@@ -15,7 +15,7 @@
                 <li><a href="{{ url_for('transferencia_ted', bank=bank) }}" class="nav-button {{ bank }}">Realizar Transferência TED</a></li>
                 <li><a href="{{ url_for('transferencia_pix', bank=bank) }}" class="nav-button {{ bank }}">Realizar Transferência PIX</a></li>
                 <li><a href="{{ url_for('sacar', bank=bank) }}" class="nav-button {{ bank }}">Sacar</a></li>
-
+                <li><a href="{{ url_for('minhas_chaves_pix', bank=bank) }}" class="nav-button {{ bank }}">Minhas Chaves PIX</a></li>
                 <li><a href="{{ url_for('logout') }}" class="nav-button {{ bank }}">Sair</a></li>
             </ul>
         </nav>

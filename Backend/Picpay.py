@@ -10,7 +10,7 @@ ip_table_router = 'localhost'
 url_table_router = 'http://' + ip_table_router + ':4326'
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bradesco.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///picpay.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -66,10 +66,10 @@ def atualizar_tabela_roteamento(cod_banco, url_banco):
 
 # Configurações do banco
 IP = socket.gethostbyname(socket.gethostname())
-PORT = 9635
+PORT = 9637
 URL_SERVER = f'http://{IP}:{PORT}'
 # Colocando o código do banco e a url na tabela de roteamento
-BANCO_ID = '237'
+BANCO_ID = '380'
 atualizar_tabela_roteamento(BANCO_ID, URL_SERVER)
 
 # Gera uma agência única
@@ -610,6 +610,8 @@ def cadastrar_chave_pix():
         return jsonify({'mensagem': 'Conta não encontrada'}), 404
 
     # Verificar se a chave PIX já existe no banco atual
+    if conta_obj.chave_pix_cpf_cnpj == chave_pix:
+        return jsonify({'mensagem': 'Chave PIX já cadastrada'}), 400
     elif conta_obj.chave_pix_email == chave_pix:
         return jsonify({'mensagem': 'Chave PIX já cadastrada'}), 400
     elif conta_obj.chave_pix_aleatoria == chave_pix:
@@ -638,11 +640,13 @@ def cadastrar_chave_pix():
             pass  # Você pode decidir o que fazer em caso de erro de requisição
 
     # Caso a chave PIX não exista no banco atual nem em outros bancos, cadastrar no banco atual
-    if tipo_chave == 'Email':
+    if tipo_chave == 'cpf_cnpj':
+        conta_obj.chave_pix_cpf_cnpj = chave_pix
+    elif tipo_chave == 'email':
         conta_obj.chave_pix_email = chave_pix
-    elif tipo_chave == 'Aleatória':
+    elif tipo_chave == 'aleatoria':
         conta_obj.chave_pix_aleatoria = chave_pix
-    elif tipo_chave == 'Telefone':
+    elif tipo_chave == 'telefone':
         conta_obj.numero_celular = chave_pix
     else:
         return jsonify({'mensagem': 'Tipo de chave PIX inválido'}), 400
@@ -667,12 +671,13 @@ def apagar_chave_pix():
     if not conta_obj:
         return jsonify({'mensagem': 'Conta não encontrada'}), 404
 
-
-    elif tipo_chave == 'Email':
+    if tipo_chave == 'cpf_cnpj':
+        conta_obj.chave_pix_cpf_cnpj = None
+    elif tipo_chave == 'email':
         conta_obj.chave_pix_email = None
-    elif tipo_chave == 'Aleatória':
+    elif tipo_chave == 'aleatoria':
         conta_obj.chave_pix_aleatoria = None
-    elif tipo_chave == 'Telefone':
+    elif tipo_chave == 'telefone':
         conta_obj.numero_celular = None
     else:
         return jsonify({'mensagem': 'Chave PIX não encontrada ou tipo inválido'}), 400
@@ -690,9 +695,10 @@ def visualizar_chaves_pix():
         return jsonify({'mensagem': 'Conta não encontrada'}), 404
 
     chaves_pix = {
-        'Email': conta_obj.chave_pix_email,
-        'Aleatória': conta_obj.chave_pix_aleatoria,
-        'Telefone': conta_obj.numero_celular
+        'cpf_cnpj': conta_obj.chave_pix_cpf_cnpj,
+        'email': conta_obj.chave_pix_email,
+        'aleatoria': conta_obj.chave_pix_aleatoria,
+        'celular': conta_obj.numero_celular
     }
 
     # Filtrar chaves que não estão None
