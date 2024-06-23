@@ -1,10 +1,16 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy import create_engine, select
+from threading import Lock
 import json
 import os
 import socket
 import requests
 import random
+import threading
+
 
 ip_table_router = 'localhost'
 url_table_router = 'http://' + ip_table_router + ':4326'
@@ -40,6 +46,7 @@ class Conta(db.Model):
         backref=db.backref('contas', lazy=True))
 
 
+
 # Inicializa o banco de dados
 with app.app_context():
     db.create_all()
@@ -71,6 +78,8 @@ URL_SERVER = f'http://{IP}:{PORT}'
 # Colocando o código do banco e a url na tabela de roteamento
 BANCO_ID = '536'
 atualizar_tabela_roteamento(BANCO_ID, URL_SERVER)
+
+
 
 # Gera uma agência única
 def gerar_agencia():
@@ -226,51 +235,11 @@ def saldo():
     else:
         return jsonify({'erro': 'Cliente não encontrado'}), 404
 
-@app.route('/saldo_total', methods=['GET'])
-def saldo_total():
-    saldo_total = 0.0
-    saldos_por_banco = {}
-    agencia = request.args.get('agencia')
-    conta = request.args.get('conta')
-
-    # Verifica se a conta existe
-    conta_obj = Conta.query.filter_by(agencia=agencia, conta=conta).first()
-    if not conta_obj:
-        return jsonify({'erro': 'Conta não encontrada'}), 404
-
-    # Pegando o CPF ou CNPJ
-    cpf_ou_cnpj = conta_obj.titulares[0].cpf_ou_cnpj  # Assumindo que pelo menos um titular existe
-
-    # Verifica saldo no banco atual
-    titular = Titular.query.filter_by(cpf_ou_cnpj=cpf_ou_cnpj).first()
-    saldo_atual = sum(conta.saldo for conta in titular.contas)
-    saldos_por_banco[BANCO_ID] = saldo_atual
-    saldo_total += saldo_atual
-
-    # Obter tabela de roteamento
-    banco_urls = obter_tabela_roteamento()
-    for banco_id, url in banco_urls.items():
-        if banco_id != BANCO_ID:  # Ignora o próprio banco
-            try:
-                response = requests.get(f'{url}/saldo', params={'cpf_ou_cnpj': cpf_ou_cnpj})
-                if response.status_code == 200:
-                    saldo_banco = response.json().get('saldo', 0.0)
-                    saldo_total += saldo_banco
-                    saldos_por_banco[banco_id] = saldo_banco
-                else:
-                    print(f"Erro ao consultar saldo no banco {banco_id}: {response.json()}")
-            except requests.RequestException as e:
-                print(f"Erro ao consultar saldo no banco {banco_id}: {e}")
-
-    return jsonify({'saldo_total': saldo_total, 'saldos_por_banco': saldos_por_banco, 'cpf_ou_cnpj': cpf_ou_cnpj }), 200
 
 
 
-
-
-
-
-
+# Dicionário global para armazenar locks para cada conta
+locks = {}
 
 @app.route('/transferencia/enviar', methods=['POST'])
 def enviar_transferencia():
@@ -298,22 +267,35 @@ def enviar_transferencia():
     if banco_destino not in banco_urls:
         return jsonify({'erro': 'Banco de destino não encontrado'}), 404
 
-    # Envia a transferência para o banco destino
-    url_destino = f"{banco_urls[banco_destino]}/transferencia/receber"
-    dados_transferencia = {
-        'agencia_destino': agencia_destino,
-        'conta_destino': conta_destino,
-        'valor': valor,
-        'banco_origem': BANCO_ID  # Identificador do banco de origem
-    }
-    response = requests.post(url_destino, json=dados_transferencia)
+    # Encontra ou cria um lock para a conta de origem
+    lock = locks.setdefault(f"{agencia_origem}-{conta_origem}", threading.Lock())
 
-    if response.status_code == 200:
-        conta_origem_obj.saldo -= valor
-        db.session.commit()
-        return jsonify({'mensagem': 'Transferência realizada com sucesso'}), 200
-    else:
-        return jsonify({'erro': 'Falha na transferência para o banco destino'}), response.status_code
+    # Adiciona o bloqueio para a operação de transferência
+    with lock:
+        # Verifica novamente o saldo dentro do bloqueio
+        conta_origem_obj = Conta.query.filter_by(agencia=agencia_origem, conta=conta_origem).first()
+        if conta_origem_obj.saldo < valor:
+            return jsonify({'erro': 'Saldo insuficiente'}), 400
+
+        # Envia a transferência para o banco destino
+        url_destino = f"{banco_urls[banco_destino]}/transferencia/receber"
+        dados_transferencia = {
+            'agencia_destino': agencia_destino,
+            'conta_destino': conta_destino,
+            'valor': valor,
+            'banco_origem': BANCO_ID  # Identificador do banco de origem
+        }
+        response = requests.post(url_destino, json=dados_transferencia)
+
+        if response.status_code == 200:
+            conta_origem_obj.saldo -= valor
+            db.session.commit()
+            return jsonify({'mensagem': 'Transferência realizada com sucesso'}), 200
+        else:
+            return jsonify({'erro': 'Falha na transferência para o banco destino'}), response.status_code
+
+
+
 
 @app.route('/transferencia/receber', methods=['POST'])
 def receber_transferencia():
@@ -322,15 +304,21 @@ def receber_transferencia():
     conta_destino = dados['conta_destino']
     valor = dados['valor']
 
-    conta_destino_obj = Conta.query.filter_by(agencia=agencia_destino, conta=conta_destino).first()
+    # Obter ou criar o lock para a conta de destino
+    lock = locks.setdefault(f"{agencia_destino}-{conta_destino}", Lock())
 
-    if not conta_destino_obj:
-        return jsonify({'erro': 'Conta de destino não encontrada'}), 404
+    # Adquirir o lock para garantir operações serializadas para esta conta
+    with lock:
+        conta_destino_obj = Conta.query.filter_by(agencia=agencia_destino, conta=conta_destino).first()
 
-    conta_destino_obj.saldo += valor
-    db.session.commit()
+        if not conta_destino_obj:
+            return jsonify({'erro': 'Conta de destino não encontrada'}), 404
+
+        conta_destino_obj.saldo += valor
+        db.session.commit()
 
     return jsonify({'mensagem': 'Transferência recebida com sucesso'}), 200
+
 
 @app.route('/pix/chave', methods=['GET'])
 def verificar_chave_pix():
@@ -610,8 +598,6 @@ def cadastrar_chave_pix():
         return jsonify({'mensagem': 'Conta não encontrada'}), 404
 
     # Verificar se a chave PIX já existe no banco atual
-    if conta_obj.chave_pix_cpf_cnpj == chave_pix:
-        return jsonify({'mensagem': 'Chave PIX já cadastrada'}), 400
     elif conta_obj.chave_pix_email == chave_pix:
         return jsonify({'mensagem': 'Chave PIX já cadastrada'}), 400
     elif conta_obj.chave_pix_aleatoria == chave_pix:
@@ -640,13 +626,11 @@ def cadastrar_chave_pix():
             pass  # Você pode decidir o que fazer em caso de erro de requisição
 
     # Caso a chave PIX não exista no banco atual nem em outros bancos, cadastrar no banco atual
-    if tipo_chave == 'cpf_cnpj':
-        conta_obj.chave_pix_cpf_cnpj = chave_pix
-    elif tipo_chave == 'email':
+    if tipo_chave == 'Email':
         conta_obj.chave_pix_email = chave_pix
-    elif tipo_chave == 'aleatoria':
+    elif tipo_chave == 'Aleatória':
         conta_obj.chave_pix_aleatoria = chave_pix
-    elif tipo_chave == 'telefone':
+    elif tipo_chave == 'Telefone':
         conta_obj.numero_celular = chave_pix
     else:
         return jsonify({'mensagem': 'Tipo de chave PIX inválido'}), 400
@@ -671,13 +655,12 @@ def apagar_chave_pix():
     if not conta_obj:
         return jsonify({'mensagem': 'Conta não encontrada'}), 404
 
-    if tipo_chave == 'cpf_cnpj':
-        conta_obj.chave_pix_cpf_cnpj = None
-    elif tipo_chave == 'email':
+
+    elif tipo_chave == 'Email':
         conta_obj.chave_pix_email = None
-    elif tipo_chave == 'aleatoria':
+    elif tipo_chave == 'Aleatória':
         conta_obj.chave_pix_aleatoria = None
-    elif tipo_chave == 'telefone':
+    elif tipo_chave == 'Telefone':
         conta_obj.numero_celular = None
     else:
         return jsonify({'mensagem': 'Chave PIX não encontrada ou tipo inválido'}), 400
@@ -695,10 +678,9 @@ def visualizar_chaves_pix():
         return jsonify({'mensagem': 'Conta não encontrada'}), 404
 
     chaves_pix = {
-        'cpf_cnpj': conta_obj.chave_pix_cpf_cnpj,
-        'email': conta_obj.chave_pix_email,
-        'aleatoria': conta_obj.chave_pix_aleatoria,
-        'celular': conta_obj.numero_celular
+        'Email': conta_obj.chave_pix_email,
+        'Aleatória': conta_obj.chave_pix_aleatoria,
+        'Telefone': conta_obj.numero_celular
     }
 
     # Filtrar chaves que não estão None

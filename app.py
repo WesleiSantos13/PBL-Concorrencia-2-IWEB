@@ -254,7 +254,7 @@ def transferencia_pix(bank):
 
         return redirect(url_for('transferencia_pix', bank=bank))
 
-    # Supondo que o CPF/CNPJ esteja armazenado na sessão
+
     cpf_ou_cnpj = session.get('cpf_ou_cnpj')
     if not cpf_ou_cnpj:
         flash('CPF/CNPJ não encontrado na sessão.', 'error')
