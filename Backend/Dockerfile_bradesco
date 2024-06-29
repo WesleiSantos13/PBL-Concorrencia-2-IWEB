@@ -1,0 +1,17 @@
+# Imagem base com Python 3.12
+FROM python:3.12-slim
+
+# Diretório de trabalho no contêiner
+WORKDIR /app
+
+# Copiar o restante do código da aplicação para o diretório de trabalho
+COPY Bradesco.py .
+
+# Instalar as dependências
+RUN pip install --no-cache-dir flask flask_sqlalchemy requests
+
+# Expor a porta em que o banco vai rodar
+EXPOSE 9635
+
+# Comando para rodar a aplicação Flask
+CMD ["python", "Bradesco.py"]

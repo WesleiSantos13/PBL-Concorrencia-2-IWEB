@@ -7,20 +7,20 @@
 </head>
 <body>
     <div class="container">
-        <h2>Realizar Saque</h2>
-        <p><strong>Saldo Disponível:</strong> R$ {{ saldo }}</p>
+        <h2 class="page-title">Realizar Saque</h2>
+        
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="flash {{ category }}">{{ message }}</div>
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
+        <p><strong>Saldo Disponível:</strong> R$ {{ saldo }}</p>
         <form action="{{ url_for('sacar', bank=bank) }}" method="post">
             <label for="valor">Valor:</label>
             <input type="number" step="0.01" id="valor" name="valor" required>
-
-            <button type="submit" class="nav-button">Efetuar Saque</button>
+            <button type="submit" class="nav-button {{ bank }}">Efetuar Saque</button>
         </form>
         <nav>
             <ul>
@@ -28,5 +28,29 @@
             </ul>
         </nav>
     </div>
+
+    <script>
+        function updateColors() {
+            const bank = "{{ bank }}";
+            const pageTitle = document.querySelector('.page-title');
+            const buttons = document.querySelectorAll('.nav-button');
+
+            // Remove todas as classes de banco dos elementos relevantes
+            pageTitle.classList.remove('bradesco-bg', 'neon-bg', 'picpay-bg', 'default-background');
+            buttons.forEach(button => button.classList.remove('bradesco', 'neon', 'picpay', 'default-background'));
+
+            // Adiciona a classe correspondente ao banco selecionado ou a classe padrão
+            if (bank === 'bradesco' || bank === 'neon' || bank === 'picpay') {
+                pageTitle.classList.add(`${bank}-bg`);
+                buttons.forEach(button => button.classList.add(bank));
+            } else {
+                pageTitle.classList.add('default-background');
+                buttons.forEach(button => button.classList.add('default-background'));
+            }
+        }
+
+        // Chama a função para definir as cores iniciais
+        document.addEventListener('DOMContentLoaded', updateColors);
+    </script>
 </body>
 </html>

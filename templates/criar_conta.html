@@ -8,6 +8,18 @@
 <body>
     <div class="container">
         <h2 class="page-title">Criar Conta</h2>
+        
+        <!-- Exibir mensagens flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
         <form action="/{{ bank }}/criar_conta" method="POST" id="form_criar_conta">
             <input type="hidden" name="bank" value="{{ bank }}">
             
@@ -54,6 +66,9 @@
 
             <button type="submit" class="nav-button" onclick="navigate('criar_conta')">Criar Conta</button>
         </form>
+
+        <!-- Botão Voltar -->
+        <button onclick="voltarParaIndex()" class="nav-button">Voltar</button>
 
         <!-- Div para exibir mensagem de sucesso e informações da conta -->
         <div id="mensagem_sucesso" style="display: none;">
@@ -150,6 +165,11 @@
                 pageTitle.classList.add('default-background');
                 buttons.forEach(button => button.classList.add('default-background'));
             }
+        }
+
+        // Função para voltar para o index
+        function voltarParaIndex() {
+            window.location.href = '/';
         }
 
         // Set initial button colors

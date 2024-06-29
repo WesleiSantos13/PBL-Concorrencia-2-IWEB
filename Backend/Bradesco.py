@@ -1,22 +1,17 @@
-from flask import Flask, request, jsonify, render_template, redirect, url_for
+from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import scoped_session, sessionmaker
-from sqlalchemy import create_engine, select
 from threading import Lock
-import json
-import os
 import socket
 import requests
 import random
-import threading
-from sqlalchemy import text
 import time
+import os
 
-
-ip_table_router = 'localhost'
+ip_table_router = os.getenv('IP_ROUTER')
 url_table_router = 'http://' + ip_table_router + ':4326'
 
+# Configuração do banco de dados
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bradesco.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -33,11 +28,6 @@ conta_titular = db.Table('conta_titular',
     db.Column('titular_id', db.Integer, db.ForeignKey('titular.id'), primary_key=True)
 )
 
-
-
-
-
-
 class Conta(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     agencia = db.Column(db.String(50), nullable=False)
@@ -52,13 +42,13 @@ class Conta(db.Model):
     titulares = db.relationship('Titular', secondary=conta_titular, lazy='subquery',
         backref=db.backref('contas', lazy=True))
 
-
 class Lock(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     resource = db.Column(db.String(255), unique=True, nullable=False)
     locked = db.Column(db.Boolean, default=False, nullable=False)
     timestamp = db.Column(db.DateTime, server_default=db.func.now())
 
+# Função para adquirir um bloqueio 
 def acquire_lock(resource, timeout=10):
     start_time = time.time()
     while time.time() - start_time < timeout:
@@ -78,6 +68,7 @@ def acquire_lock(resource, timeout=10):
         time.sleep(0.1)
     return False
 
+# Função para liberar um bloqueio em um recurso específico
 def release_lock(resource):
     try:
         lock = Lock.query.filter_by(resource=resource).first()
@@ -121,10 +112,9 @@ BANCO_ID = '237'
 atualizar_tabela_roteamento(BANCO_ID, URL_SERVER)
 
 
-
 # Gera uma agência única
 def gerar_agencia():
-    return f"{random.randint(3026, 3100)}"
+    return f"{random.randint(3000, 3200)}"
 
 # Gera um número de conta único
 def gerar_conta():
@@ -133,30 +123,20 @@ def gerar_conta():
         if not Conta.query.filter_by(conta=conta).first():
             return conta
 
-
+# Rota para criar conta
 @app.route('/criar_conta', methods=['POST'])
 def criar_conta():
     dados = request.json
     senha = dados.get('senha')
     tipo_conta = dados.get('tipo_conta')
 
-
-    # Verificar se o cliente já possui uma conta individual
-    if tipo_conta != 'PFC':  # Se não for conta conjunta
-        cpf_ou_cnpj = dados.get('cpf_ou_cnpj')
-        titular_existente = Titular.query.filter_by(cpf_ou_cnpj=cpf_ou_cnpj).first()
-        if titular_existente and any(conta.tipo_conta != 'PFC' for conta in titular_existente.contas):
-            return jsonify({'erro': 'O cliente já possui uma conta individual'}), 400
-
     agencia = gerar_agencia()
     conta = gerar_conta()
-
-    nova_conta = Conta(agencia=agencia,  conta=conta,  senha=senha, tipo_conta=tipo_conta)
+    nova_conta = Conta(agencia=agencia, conta=conta, senha=senha, tipo_conta=tipo_conta)
 
     if tipo_conta == 'PFC':  # Conta conjunta
         titulares_dados = dados.get('titulares')
-
-        # Verificar se os titulares já têm uma conta conjunta juntos
+        # Verificar se os titulares já têm uma conta conjunta juntos--------------------------- nao funciona
         for cpf, nome in titulares_dados.items():
             titular = Titular.query.filter_by(cpf_ou_cnpj=cpf).first()
             if not titular:
@@ -164,37 +144,37 @@ def criar_conta():
                 db.session.add(titular)
             else:
                 for conta_titular in titular.contas:
-                    if conta_titular.tipo_conta == 'PFC':
-                        if set(conta_titular.titulares) == set(nova_conta.titulares):
-                            return jsonify({'erro': 'Titulares já possuem uma conta conjunta juntos'}), 400
-                            
+                    if conta_titular.tipo_conta == 'PFC' and set(conta_titular.titulares) == set(titulares_dados.keys()):
+                        return jsonify({'erro': 'Titulares já possuem uma conta conjunta juntos'}), 400
+
             nova_conta.titulares.append(titular)
-            
+
     else:  # Conta individual (PJ ou PFI)
         cpf_ou_cnpj = dados.get('cpf_ou_cnpj')
         nome = dados.get('nome')
+
+        # Verificar se o CPF já possui registro em conta individual ou se o CNPJ já possui registro em uma conta jurídica
+        titular_existente = Titular.query.filter_by(cpf_ou_cnpj=cpf_ou_cnpj).first()
+        if titular_existente:
+            if any(conta.tipo_conta == 'PFI' for conta in titular_existente.contas):
+                return jsonify({'erro': 'O cliente já possui uma conta individual'}), 400
+            
+            if any(conta.tipo_conta == 'PJ' for conta in titular_existente.contas):
+                return jsonify({'erro': 'O CNPJ já possui registro em uma conta jurídica'}), 400
+
         titular = Titular.query.filter_by(cpf_ou_cnpj=cpf_ou_cnpj).first()
         if not titular:
             titular = Titular(nome=nome, cpf_ou_cnpj=cpf_ou_cnpj)
             db.session.add(titular)
         nova_conta.titulares.append(titular)
-
     db.session.add(nova_conta)
     db.session.commit()
-
-    return jsonify({
-        'mensagem': 'Conta criada com sucesso.',
-        'agencia': agencia,
-        'conta': conta
-    }), 200
+    return jsonify({'mensagem': 'Conta criada com sucesso', 'agencia': agencia,'conta': conta}), 200
 
 
 
 
-
-
-
-
+# Rota para fazer depósito
 @app.route('/depositar', methods=['POST'])
 def depositar():
     dados = request.json
@@ -230,6 +210,13 @@ def sacar():
     agencia = dados.get('agencia')
     conta = dados.get('conta')
     valor = dados.get('valor')
+    
+    lock_key_conta = f"{agencia}-{conta}"
+    
+    # Tenta adquirir o bloqueio para a conta
+    if not acquire_lock(lock_key_conta):
+        return jsonify({'erro': 'A conta está sendo usada em outra operação'}), 423
+
     try:
         conta_obj = Conta.query.filter_by(agencia=agencia, conta=conta).first()
         if not conta_obj:
@@ -242,9 +229,12 @@ def sacar():
         db.session.commit()
 
         return jsonify({'mensagem': 'Saque realizado com sucesso'}), 200
-
     except Exception as e:
         return jsonify({'erro': 'Ocorreu um erro ao processar a solicitação'}), 500
+    finally:
+        # Libera o bloqueio
+        release_lock(lock_key_conta)
+
 
 
 
@@ -283,7 +273,7 @@ def saldo():
 
 
 
-@app.route('/transferencia/enviar', methods=['POST'])
+@app.route('/transferencia/ted/enviar', methods=['POST'])
 def enviar_transferencia():
     dados = request.json
     agencia_origem = dados['agencia_origem']
@@ -422,7 +412,10 @@ def enviar_transferencia_pix():
     chave_pix_destino = dados['chave_pix_destino']
     contas_origem = dados['contas_origem']  # Lista de dicionários com agencia, conta e valor a ser transferido de cada conta
     valor_total = sum(conta['valor'] for conta in contas_origem)
-
+    
+    if valor_total == 0:
+        return jsonify({'erro': 'Valor a transferir zerado'}), 404
+    
     # Identificar o banco destino baseado na chave PIX
     banco_destino = identificar_banco_destino(chave_pix_destino)
     if not banco_destino:
@@ -447,7 +440,7 @@ def enviar_transferencia_pix():
             # Consulta o saldo no outro banco
             banco_urls = obter_tabela_roteamento()          
             url_origem = banco_urls[banco_origem]
-            response = requests.get(f'{url_origem}/obter_conta', params={'agencia': agencia_origem, 'conta': conta_origem})
+            response = requests.get(f'{url_origem}/saldo', params={'agencia': agencia_origem, 'conta': conta_origem})
             if response.status_code != 200 or response.json().get('saldo', 0.0) < valor:
                 saldo_suficiente = False
                 break
@@ -552,6 +545,9 @@ def descontar_saldo():
     finally:
         release_lock(lock_key)
     return jsonify({'mensagem': 'Saldo descontado com sucesso'}), 200
+
+
+
 
 # Rota para reverter saldo em caso de falha na transferência
 @app.route('/transferencia/pix/reverter', methods=['POST'])

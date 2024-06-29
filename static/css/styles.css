@@ -1,7 +1,7 @@
-/* General Styles */
+/* Estilos gerais */
 body {
     font-family: Arial, sans-serif;
-    background-color: #878885; /* Azul claro */
+    background-color: #878885;
     margin: 0;
     padding: 0;
 }
@@ -23,41 +23,35 @@ h1, h2 {
 
 .grid-container {
     display: grid;
-    grid-template-columns: 1fr auto; /* Duas colunas: uma flexível e uma automática para os botões */
-    gap: 10px; /* Reduzindo o espaçamento vertical entre os itens */
+    grid-template-columns: 1fr auto;
+    gap: 0px;
 }
 
-
 .grid-item {
-    padding: 5px; /* Reduzindo o padding para diminuir o espaço interno */
+    padding: 30px;
     background-color: #f1f1f1;
-    border-radius: 5px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    width: 100%; /* Definindo a largura para ocupar toda a largura disponível */
-    height: 30px; /* Definindo uma altura fixa para cada item do grid */
-    margin-bottom: 10px; /* Adicionando um espaço entre os itens do grid */
+    height: 30px;
+    margin-bottom: 5px;
 }
 
-
-/* Button Styles */
+/* Estilos dos botões */
 .small-button {
-    font-size: 12px; /* Reduz o tamanho do texto */
-    padding: 5px 10px; /* Reduz o espaçamento interno */
-    background-color: #f44336; /* Cor de fundo */
-    color: rgb(248, 243, 243); /* Cor do texto */
-    /*border: none; /* Remove a borda */
-    /*border-radius: 4px; /* Arredonda os cantos */
-    cursor: pointer; /* Adiciona um cursor de ponteiro */
+    font-size: 12px;
+    padding: 5px 5px;
+    background-color: #f44336;
+    color: rgb(248, 243, 243);
+    cursor: pointer;
 }
 
 .small-button:hover {
-    background-color: #d32f2f; /* Cor de fundo ao passar o mouse */
+    background-color: #d32f2f;
 }
 
-
-/* Navigation Styles */
+/* Estilos de navegação */
 nav {
     text-align: center;
     margin-top: 20px;
@@ -69,13 +63,13 @@ nav ul {
 }
 
 nav ul li {
-    margin-bottom: 10px; /* Espaçamento entre os itens */
+    margin-bottom: 10px;
 }
 
 .nav-button {
     display: block;
     padding: 15px 20px;
-    background-color: #a9a9a9; /* Cinza inicial */
+    background-color: #a9a9a9;
     border-radius: 5px;
     color: #fff;
     font-weight: bold;
@@ -88,9 +82,9 @@ nav ul li {
     background-color: #888;
 }
 
-/* Button colors for different banks */
+/* Cores dos botões para diferentes bancos */
 .nav-button.bradesco {
-    background-color: #b83838; /* Vermelho para Bradesco */
+    background-color: #f41109;
 }
 
 .nav-button.bradesco:hover {
@@ -98,7 +92,7 @@ nav ul li {
 }
 
 .nav-button.neon {
-    background-color: #1a89c4; /* Azul para Neon */
+    background-color: #1a89c4;
 }
 
 .nav-button.neon:hover {
@@ -106,16 +100,16 @@ nav ul li {
 }
 
 .nav-button.picpay {
-    background-color: #079407; /* Verde para PicPay */
+    background-color: #23c123;
 }
 
 .nav-button.picpay:hover {
     background-color: #035808;
 }
 
-/* Form Styles */
+/* Estilos do formulário */
 form {
-    max-width: 600px; /* Aumentando a largura máxima do formulário */
+    max-width: 600px;
     margin: 20px auto;
     padding: 30px;
     background-color: #fff;
@@ -127,17 +121,17 @@ form label {
     display: block;
     margin-bottom: 10px;
     font-weight: bold;
-    color: #333; /* Cor do texto das labels */
+    color: #333;
 }
 
 form input, form textarea, form select {
-    width: calc(100% - 24px); /* Ajuste para a largura dos inputs considerando o padding */
+    width: calc(100% - 24px);
     padding: 12px;
     margin-bottom: 20px;
     border: 1px solid #ccc;
     border-radius: 5px;
     font-size: 16px;
-    box-sizing: border-box; /* Garante que o padding não aumente a largura total */
+    box-sizing: border-box;
 }
 
 form button {
@@ -156,13 +150,40 @@ form button:hover {
     background-color: #c82333;
 }
 
-/* Styling for index.html */
+
+/*Estilo para os flashs */
+.flash-messages {
+    margin-bottom: 20px;
+}
+
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.alert-success {
+    color: #3c763d;
+    background-color: #dff0d8;
+    border-color: #d6e9c6;
+}
+
+.alert-error {
+    color: #a94442;
+    background-color: #f2dede;
+    border-color: #ebccd1;
+}
+
+
+
+/* Estilos para index.html */
 .index-nav ul {
     padding: 0;
 }
 
 .index-nav ul li {
-    margin-bottom: 10px; /* Espaçamento entre os itens */
+    margin-bottom: 10px;
 }
 
 .index-nav ul li a {
@@ -180,3 +201,5 @@ form button:hover {
 .index-nav ul li a:hover {
     background-color: #c82333;
 }
+
+

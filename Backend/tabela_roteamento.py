@@ -1,8 +1,10 @@
 from flask import Flask, request, jsonify
-
+import socket
 app = Flask(__name__)
 
-# Dicionário em memória para a tabela de roteamento
+ip = socket.gethostbyname(socket.gethostname())
+
+# Dicionário para a tabela de roteamento
 tabela_roteamento = {}
 
 # Carregar tabela de roteamento
@@ -30,4 +32,4 @@ def put_tabela_roteamento():
     return jsonify({'mensagem': 'Tabela de roteamento atualizada com sucesso'}), 200
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=4326, debug=True)
+    app.run(host=ip, port=4326, debug=True)

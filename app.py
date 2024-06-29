@@ -1,13 +1,17 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 import requests
-
+import os
+import socket
 app = Flask(__name__)
-app.secret_key = 'sua_chave_secreta'  
+
+app.secret_key = 'chave_secreta'  
+
+
 
 bank_urls = {
-    'bradesco': 'http://172.31.96.1:9635',
-    'neon': 'http://172.31.96.1:9636',
-    'picpay': 'http://172.31.96.1:9637'
+    'bradesco': 'http://'+os.getenv('IP_bradesco')+':9635',
+    'neon': 'http://'+os.getenv('IP_neon')+':9636',
+    'picpay': 'http://'+os.getenv('IP_picpay')+':9637'
 }
 
 @app.route('/')
@@ -99,9 +103,10 @@ def criar_conta(bank):
 
         if response.status_code == 200:
             data = response.json()
-            flash(f'Conta criada com sucesso! Agência: {data["agencia"]}, Conta: {data["conta"]}', 'success')
+            flash(f'{data['mensagem']}, Agência: {data["agencia"]}, Conta: {data["conta"]}', 'success')
         else:
-            flash('Erro ao criar conta. Tente novamente.', 'error')
+            data = response.json()
+            flash(data['erro'], 'error')
 
         return redirect(url_for('criar_conta', bank=bank))
 
@@ -199,7 +204,7 @@ def transferencia_ted(bank):
             'banco_destino': banco_destino
         }
 
-        response = requests.post(f'{base_url}/transferencia/enviar', json=dados)
+        response = requests.post(f'{base_url}/transferencia/ted/enviar', json=dados)
         if response.status_code == 200:
             flash('Transferência realizada com sucesso', 'success')
         else:
@@ -389,6 +394,6 @@ def logout():
     return redirect(url_for('index'))
 
 
-
+IP = socket.gethostbyname(socket.gethostname())
 if __name__ == '__main__':
-    app.run(port=9999, host='172.31.96.1', debug=True)
+    app.run(port=9999, host=IP, debug=True)
