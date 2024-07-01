@@ -8,7 +8,7 @@ import random
 import time
 import os
 
-ip_table_router = os.getenv('IP_ROUTER')
+ip_table_router ='10.0.0.113' #os.getenv('IP_ROUTER')
 url_table_router = 'http://' + ip_table_router + ':4326'
 
 # Configuração do banco de dados
@@ -34,7 +34,6 @@ class Conta(db.Model):
     conta = db.Column(db.String(50), nullable=False, unique=True)
     senha = db.Column(db.String(50), nullable=False)
     saldo = db.Column(db.Float, default=0.0)
-    chave_pix_cpf_cnpj = db.Column(db.String(100), unique=True)
     chave_pix_email = db.Column(db.String(100), unique=True)
     chave_pix_aleatoria = db.Column(db.String(100), unique=True)
     numero_celular = db.Column(db.String(20), unique=True)
@@ -83,7 +82,7 @@ def release_lock(resource):
 with app.app_context():
     db.create_all()
 
-
+# Obter os bancos que estão na tabela de roteamento
 def obter_tabela_roteamento():
     response = requests.get(url_table_router + '/get_banks')
     if response.status_code == 200:
@@ -92,6 +91,7 @@ def obter_tabela_roteamento():
         print('Erro ao obter tabela de roteamento:', response.json())
         return {}
 
+# Função para registrar o banco na tabela de roteamento
 def atualizar_tabela_roteamento(cod_banco, url_banco):
     dados = {
         'banco_id': cod_banco,
@@ -136,7 +136,8 @@ def criar_conta():
 
     if tipo_conta == 'PFC':  # Conta conjunta
         titulares_dados = dados.get('titulares')
-        # Verificar se os titulares já têm uma conta conjunta juntos--------------------------- nao funciona
+        titulares_cpf = list(titulares_dados.keys())  # Pegar apenas os CPFs dos titulares
+
         for cpf, nome in titulares_dados.items():
             titular = Titular.query.filter_by(cpf_ou_cnpj=cpf).first()
             if not titular:
@@ -144,7 +145,7 @@ def criar_conta():
                 db.session.add(titular)
             else:
                 for conta_titular in titular.contas:
-                    if conta_titular.tipo_conta == 'PFC' and set(conta_titular.titulares) == set(titulares_dados.keys()):
+                    if conta_titular.tipo_conta == 'PFC' and set([t.cpf_ou_cnpj for t in conta_titular.titulares]) == set(titulares_cpf):
                         return jsonify({'erro': 'Titulares já possuem uma conta conjunta juntos'}), 400
 
             nova_conta.titulares.append(titular)
@@ -156,11 +157,12 @@ def criar_conta():
         # Verificar se o CPF já possui registro em conta individual ou se o CNPJ já possui registro em uma conta jurídica
         titular_existente = Titular.query.filter_by(cpf_ou_cnpj=cpf_ou_cnpj).first()
         if titular_existente:
+            # Se já possui conta individual
             if any(conta.tipo_conta == 'PFI' for conta in titular_existente.contas):
-                return jsonify({'erro': 'O cliente já possui uma conta individual'}), 400
-            
+                return jsonify({'erro': f'O cliente com o CPF: ({cpf_ou_cnpj}) já possui uma conta individual'}), 400
+            # Se o Cnpj possui registro em cota jurídica
             if any(conta.tipo_conta == 'PJ' for conta in titular_existente.contas):
-                return jsonify({'erro': 'O CNPJ já possui registro em uma conta jurídica'}), 400
+                return jsonify({'erro': f'O CNPJ: ({cpf_ou_cnpj}) já possui registro em uma conta jurídica'}), 400
 
         titular = Titular.query.filter_by(cpf_ou_cnpj=cpf_ou_cnpj).first()
         if not titular:
@@ -182,28 +184,32 @@ def depositar():
     conta_destino = dados['conta']
     valor = dados['valor']
     banco_destino = dados['banco_destino']
-
-    # Verifica se o banco destino está na tabela de roteamento
-    banco_urls = obter_tabela_roteamento()
-    if banco_destino not in banco_urls:
-        return jsonify({'erro': 'Banco de destino não encontrado'}), 404
-
-    # Envia a transferência para o banco destino
-    url_destino = f"{banco_urls[banco_destino]}/transferencia/receber"
-    dados_transferencia = {
-        "tipo": "DEP",
-        'agencia_destino': agencia_destino,
-        'conta_destino': conta_destino,
-        'valor': valor,
-    }
-    response = requests.post(url_destino, json=dados_transferencia)
-    if response.status_code == 200:
+   
+    # Se o depósito for para o mesmo banco de destino
+    if banco_destino == BANCO_ID:
+        conta_obj = Conta.query.filter_by(agencia=agencia_destino, conta=conta_destino).first()
+        if not conta_obj:
+            return jsonify({'erro': 'Conta não encontrada'}), 404
+        conta_obj.saldo += valor
+        db.session.commit()
         return jsonify({'mensagem': 'Depósito realizado com sucesso'}), 200
+    
+    # Se for para outro banco
     else:
-        return jsonify({'erro': 'Falha no depósito'}), response.status_code
+        # buscar os bancos na tabela de roteamento
+        banco_urls = obter_tabela_roteamento()
+        # Envia a transferência para o banco destino
+        url_destino = f"{banco_urls[banco_destino]}/transferencia/receber"
+        dados_transferencia = {"tipo": "DEP",'agencia_destino': agencia_destino,'conta_destino': conta_destino, 'valor': valor}
+
+        response = requests.post(url_destino, json=dados_transferencia)
+        if response.status_code == 200:
+            return jsonify({'mensagem': 'Depósito realizado com sucesso'}), 200
+        else:
+            return jsonify({'erro': 'Falha no depósito. Tente novamente.'}), response.status_code
 
 
-
+# Rota para sacar valores da conta logada
 @app.route('/sacar', methods=['POST'])
 def sacar():
     dados = request.json
@@ -221,7 +227,7 @@ def sacar():
         conta_obj = Conta.query.filter_by(agencia=agencia, conta=conta).first()
         if not conta_obj:
             return jsonify({'erro': 'Conta não encontrada'}), 404
-
+        # Verificando se o saldo é suficiente
         if conta_obj.saldo < valor:
             return jsonify({'erro': 'Saldo insuficiente'}), 400
 
@@ -240,7 +246,7 @@ def sacar():
 
 
 
-
+# Rota para fazer login
 @app.route('/login', methods=['POST'])
 def login():
     dados = request.json
@@ -248,21 +254,24 @@ def login():
     conta = dados.get('conta')
     senha = dados.get('senha')
     cpf_ou_cnpj = dados.get('cpf_ou_cnpj')
-
+    # Filtra a conta e o titular
     conta_obj = Conta.query.filter_by(conta=conta, agencia=agencia).first()
     titular_obj = Titular.query.filter_by(cpf_ou_cnpj=cpf_ou_cnpj).first()
-
+    # Verifica as credenciais
     if conta_obj and conta_obj.senha == senha and titular_obj in conta_obj.titulares:
         return jsonify({'mensagem': 'Login bem-sucedido'}), 200
     else:
         return jsonify({'erro': 'Credenciais inválidas'}), 401
 
+
+# Rota para ver o saldo da conta
 @app.route('/saldo', methods=['GET'])
 def saldo():
     agencia = request.args.get('agencia')
     conta = request.args.get('conta')
+    # Filtra a conta atraves da agencia e conta
     conta_obj = Conta.query.filter_by(agencia=agencia, conta=conta).first()
-    if conta_obj:
+    if conta_obj:# Se a conta existe
         return jsonify({'saldo': conta_obj.saldo}), 200
     else:
         return jsonify({'erro': 'Cliente não encontrado'}), 404
@@ -272,7 +281,7 @@ def saldo():
 
 
 
-
+# Rota para transferência ted
 @app.route('/transferencia/ted/enviar', methods=['POST'])
 def enviar_transferencia():
     dados = request.json
@@ -284,20 +293,9 @@ def enviar_transferencia():
     banco_destino = dados['banco_destino']
 
     conta_origem_obj = Conta.query.filter_by(agencia=agencia_origem, conta=conta_origem).first()
-
-    if conta_origem == conta_destino:
-        return jsonify({'erro': 'Não é possível transferir para a mesma conta'}), 400
-
+    # Se a conta não existir
     if not conta_origem_obj:
         return jsonify({'erro': 'Conta de origem não encontrada'}), 404
-
-    if conta_origem_obj.saldo < valor:
-        return jsonify({'erro': 'Saldo insuficiente'}), 400
-
-    # Verifica se o banco destino está na tabela de roteamento
-    banco_urls = obter_tabela_roteamento()
-    if banco_destino not in banco_urls:
-        return jsonify({'erro': 'Banco de destino não encontrado'}), 404
 
     # Tenta adquirir o bloqueio para a conta de origem
     lock_key_origem = f"{agencia_origem}-{conta_origem}"
@@ -305,22 +303,60 @@ def enviar_transferencia():
         return jsonify({'erro': 'A conta de origem está sendo usada em outra operação'}), 423
 
     try:
-        # Envia a transferência para o banco destino
-        url_destino = f"{banco_urls[banco_destino]}/transferencia/receber"
-        dados_transferencia = {
-            'tipo': 'TED',
-            'agencia_destino': agencia_destino,
-            'conta_destino': conta_destino,
-            'valor': valor,
-        }
-        response = requests.post(url_destino, json=dados_transferencia)
+        # Se a transferência for para o mesmo banco de destino
+        if banco_destino == BANCO_ID:
+            conta_destino_obj = Conta.query.filter_by(agencia=agencia_destino, conta=conta_destino).first()
+            # se a conta de destino não existir
+            if not conta_destino_obj:
+                return jsonify({'erro': 'Conta de destino não encontrada'}), 404
+            # Se a transferência for para a mesma conta
+            if conta_origem_obj == conta_destino_obj:
+                return jsonify({'erro': 'Não é possível transferir para a mesma conta'}), 400
+            # Verificando saldo
+            if conta_origem_obj.saldo < valor:
+                return jsonify({'erro': 'Saldo insuficiente'}), 400
 
-        if response.status_code == 200:
-            conta_origem_obj.saldo -= valor
-            db.session.commit()
-            return jsonify({'mensagem': 'Transferência realizada com sucesso'}), 200
+            # Tenta adquirir o bloqueio para a conta de destino
+            lock_key_destino = f"{agencia_destino}-{conta_destino}"
+            if not acquire_lock(lock_key_destino):
+                return jsonify({'erro': 'A conta de destino está sendo usada em outra operação'}), 423
+
+            try:
+                # Desconta o valor e incrementa em outra conta
+                conta_origem_obj.saldo -= valor
+                conta_destino_obj.saldo += valor
+                db.session.commit()
+                return jsonify({'mensagem': 'Transferência realizada com sucesso'}), 200
+            finally:
+                # Libera o bloqueio
+                release_lock(lock_key_destino)
+        
+        # Se a transferência for para outro banco
         else:
-            return jsonify({'erro': 'Falha na transferência para o banco destino'}), response.status_code
+            # Verifica o saldo
+            if conta_origem_obj.saldo < valor:
+                return jsonify({'erro': 'Saldo insuficiente'}), 400
+
+            # Busca o banco de destino na tabela de roteamento
+            banco_urls = obter_tabela_roteamento()
+
+            # Envia a transferência para o banco destino
+            url_destino = f"{banco_urls[banco_destino]}/transferencia/receber"
+            dados_transferencia = {
+                'tipo': 'TED',
+                'agencia_destino': agencia_destino,
+                'conta_destino': conta_destino,
+                'valor': valor
+            }
+            response = requests.post(url_destino, json=dados_transferencia)
+
+            if response.status_code == 200:
+                # Desconta o valor
+                conta_origem_obj.saldo -= valor
+                db.session.commit()
+                return jsonify({'mensagem': 'Transferência realizada com sucesso'}), 200
+            else:
+                return jsonify({'erro': 'Falha na transferência para o banco de destino'}), response.status_code
     finally:
         # Libera o bloqueio
         release_lock(lock_key_origem)
@@ -328,34 +364,32 @@ def enviar_transferencia():
 
 
 
-
+# Rota para receber depósitos, transferências ted e pix
 @app.route('/transferencia/receber', methods=['POST'])
 def receber_transferencia():
     dados = request.json
     tipo = dados['tipo']
     valor = dados['valor']
     
+    # Se for do tipo pix
     if tipo == 'PIX':
         chave_pix_destino = dados['chave_pix_destino']
 
         # Verifica se a chave PIX de destino existe e é válida
-        conta_destino = Conta.query.filter(
-            (Conta.chave_pix_cpf_cnpj == chave_pix_destino) | 
-            (Conta.chave_pix_email == chave_pix_destino) | 
-            (Conta.chave_pix_aleatoria == chave_pix_destino) | 
-            (Conta.numero_celular == chave_pix_destino)
-        ).first()
-
+        conta_destino = Conta.query.filter((Conta.chave_pix_email == chave_pix_destino) |(Conta.chave_pix_aleatoria == chave_pix_destino) | (Conta.numero_celular == chave_pix_destino)).first()
+        # Se a chave pix não existe
         if not conta_destino:
             return jsonify({'erro': 'Chave PIX de destino inválida'}), 400
 
         lock_key_destino = f"pix-{chave_pix_destino}"
+
+    # Se for transferencia ted ou deposito
     elif tipo == 'TED' or tipo == 'DEP':
         agencia_destino = dados['agencia_destino']
         conta_destino = dados['conta_destino']
-
+        # Filtra a conta
         conta_destino = Conta.query.filter_by(agencia=agencia_destino, conta=conta_destino).first()
-
+        # Se a conta não existir
         if not conta_destino:
             return jsonify({'erro': 'Conta de destino não encontrada'}), 404
 
@@ -379,12 +413,11 @@ def receber_transferencia():
 
 
 
-
+# Rota para que outros bancos possam saber se uma chave pix já está cadastrada
 @app.route('/pix/chave', methods=['GET'])
 def verificar_chave_pix():
     chave_pix = request.args.get('chave_pix')
     conta = Conta.query.filter(
-        (Conta.chave_pix_cpf_cnpj == chave_pix) | 
         (Conta.chave_pix_email == chave_pix) | 
         (Conta.chave_pix_aleatoria == chave_pix) | 
         (Conta.numero_celular == chave_pix)
@@ -393,10 +426,11 @@ def verificar_chave_pix():
         return jsonify({'pertence': True}), 200
     else:
         return jsonify({'pertence': False}), 200
+    
 
+# Função para identificar o banco através da chave pix
 def identificar_banco_destino(chave_pix):
     banco_urls = obter_tabela_roteamento()
-    
     for banco_id, url in banco_urls.items():
         response = requests.get(f'{url}/pix/chave', params={'chave_pix': chave_pix})
         if response.status_code == 200:
@@ -413,6 +447,7 @@ def enviar_transferencia_pix():
     contas_origem = dados['contas_origem']  # Lista de dicionários com agencia, conta e valor a ser transferido de cada conta
     valor_total = sum(conta['valor'] for conta in contas_origem)
     
+    # Se o valor da transferencia for 0 não deve existir transferência
     if valor_total == 0:
         return jsonify({'erro': 'Valor a transferir zerado'}), 404
     
@@ -423,7 +458,7 @@ def enviar_transferencia_pix():
 
     saldo_suficiente = True
  
-    # Iterarando sobre cada conta origem para verificar o saldo e atualizar
+    # Iterando sobre cada conta origem para verificar o saldo e atualizar
     for conta_info in contas_origem:
         banco_origem = conta_info['banco']
         agencia_origem = conta_info['agencia']
@@ -454,7 +489,8 @@ def enviar_transferencia_pix():
         agencia_origem = conta_info['agencia']
         conta_origem = conta_info['conta']
         valor = conta_info['valor']
-
+        
+        # Se for o mesmo banco de origem
         if banco_origem == BANCO_ID:
             lock_key = f"{agencia_origem}-{conta_origem}"
             if not acquire_lock(lock_key):
@@ -465,6 +501,7 @@ def enviar_transferencia_pix():
                 conta_origem_obj.saldo -= valor
                 db.session.commit()
             finally:
+                # Libera o bloqueio
                 release_lock(lock_key)
         else:
             banco_urls = obter_tabela_roteamento()
@@ -496,8 +533,9 @@ def enviar_transferencia_pix():
             agencia_origem = conta_info['agencia']
             conta_origem = conta_info['conta']
             valor = conta_info['valor']
-
+            # Para reverter saldo para o mesmo banco
             if banco_origem == BANCO_ID:
+                # Tenta adquirir o lock
                 lock_key = f"{agencia_origem}-{conta_origem}"
                 if acquire_lock(lock_key):  # Adicionar bloqueio ao reverter saldo
                     try:
@@ -505,7 +543,9 @@ def enviar_transferencia_pix():
                         conta_origem_obj.saldo += valor
                         db.session.commit()
                     finally:
+                        # libera o bloqueio
                         release_lock(lock_key)
+            # Reverter o saldo para outros bancos
             else:
                 banco_urls = obter_tabela_roteamento()
                 url_origem = banco_urls[banco_origem]
@@ -529,20 +569,23 @@ def descontar_saldo():
     conta = dados['conta']
     valor = dados['valor']
     lock_key = f"{agencia}-{conta}"
-
+    
+    # Tenta adquirir o lock
     if not acquire_lock(lock_key):
         return jsonify({'erro': f'A conta {agencia}-{conta} está sendo usada em outra operação'}), 423
 
     try:
+        # Filtra a conta
         conta_obj = Conta.query.filter_by(agencia=agencia, conta=conta).first()
         if not conta_obj:
             return jsonify({'erro': 'Conta não encontrada'}), 404
-
+        # Verifica saldo
         if conta_obj.saldo < valor:
             return jsonify({'erro': 'Saldo insuficiente'}), 400
         conta_obj.saldo -= valor
         db.session.commit()
     finally:
+        # Libera o bloqueio
         release_lock(lock_key)
     return jsonify({'mensagem': 'Saldo descontado com sucesso'}), 200
 
@@ -556,12 +599,13 @@ def reverter_saldo():
     agencia = dados['agencia']
     conta = dados['conta']
     valor = dados['valor']
+    # Tenta adiquirir o lock
     lock_key = f"{agencia}-{conta}"
-
     if not acquire_lock(lock_key):
         return jsonify({'erro': f'A conta {agencia}-{conta} está sendo usada em outra operação'}), 423
 
     try:
+        # Filtra a conta
         conta_obj = Conta.query.filter_by(agencia=agencia, conta=conta).first()
         if not conta_obj:
             return jsonify({'erro': 'Conta não encontrada'}), 404
@@ -569,6 +613,7 @@ def reverter_saldo():
         conta_obj.saldo += valor
         db.session.commit()
     finally:
+        # Libera o bloqueio
         release_lock(lock_key)
 
     return jsonify({'mensagem': 'Saldo revertido com sucesso'}), 200
@@ -578,7 +623,7 @@ def reverter_saldo():
 
 
 
-# Rota para buscar contas de todos os bancos
+# Rota para buscar contas de um mesmo titular em todos os bancos
 @app.route('/obter_contas_todos_bancos', methods=['GET'])
 def obter_contas_todos_bancos():
     cpf_ou_cnpj = request.args.get('cpf_ou_cnpj')
@@ -606,20 +651,22 @@ def obter_contas_todos_bancos():
     # Faz uma chamada para cada banco na tabela de roteamento
     for banco_id, url in banco_urls.items():
         if banco_id != BANCO_ID:
-            try:
-                # Chama a rota /obter_contas do outro banco
-                response = requests.get(f'{url}/obter_contas', params={'cpf_ou_cnpj': cpf_ou_cnpj})
-                if response.status_code == 200:
-                    # Adiciona as contas retornadas pelo outro banco
-                    contas_banco = response.json().get('contas', [])
-                    contas_local.extend(contas_banco)
-                else:
-                    print(f"Erro ao obter contas do banco {banco_id}: {response.json()}")
-            except requests.RequestException as e:
-                print(f"Erro ao obter contas do banco {banco_id}: {e}")
+            # Chama a rota /obter_contas do outro banco
+            response = requests.get(f'{url}/obter_contas', params={'cpf_ou_cnpj': cpf_ou_cnpj})
+            if response.status_code == 200:
+                # Adiciona as contas retornadas pelo outro banco
+                contas_banco = response.json().get('contas', [])
+                contas_local.extend(contas_banco)
+            else:
+                print(f"Erro ao obter contas do banco {banco_id}: {response.json()}")
 
     # Retorna a lista combinada de contas
     return jsonify({'contas': contas_local}), 200
+
+
+
+
+
 
 # Rota para obter contas do banco atual
 @app.route('/obter_contas', methods=['GET'])
@@ -649,30 +696,9 @@ def obter_contas():
 
 
 
-@app.route('/transferencia/pix/receber', methods=['POST'])
-def receber_transferencia_pix():
-    dados = request.json
-    chave_pix_destino = dados['chave_pix_destino']
-    valor = dados['valor']
-
-    # Verifica se a chave PIX de destino existe e é válida
-    conta_destino = Conta.query.filter(
-        (Conta.chave_pix_cpf_cnpj == chave_pix_destino) | 
-        (Conta.chave_pix_email == chave_pix_destino) | 
-        (Conta.chave_pix_aleatoria == chave_pix_destino) | 
-        (Conta.numero_celular == chave_pix_destino)
-    ).first()
-
-    if not conta_destino:
-        return jsonify({'erro': 'Chave PIX de destino inválida'}), 400
-
-    conta_destino.saldo += valor
-    db.session.commit()
-
-    return jsonify({'mensagem': 'Transferência PIX recebida com sucesso'}), 200
 
 
-
+# Rota para cadastrar chave pix
 @app.route('/pix/cadastrar', methods=['POST'])
 def cadastrar_chave_pix():
     dados = request.json
@@ -681,37 +707,31 @@ def cadastrar_chave_pix():
     chave_pix = dados['chave_pix']
     tipo_chave = dados['tipo_chave']
 
+    # Filtra a conta
     conta_obj = Conta.query.filter_by(agencia=agencia, conta=conta).first()
     if not conta_obj:
         return jsonify({'mensagem': 'Conta não encontrada'}), 404
 
-    # Verificar se a chave PIX já existe no banco atual
-    elif conta_obj.chave_pix_email == chave_pix:
-        return jsonify({'mensagem': 'Chave PIX já cadastrada'}), 400
-    elif conta_obj.chave_pix_aleatoria == chave_pix:
-        return jsonify({'mensagem': 'Chave PIX já cadastrada'}), 400
-    elif conta_obj.numero_celular == chave_pix:
+    # Verificar se a chave PIX já existe no banco atual em qualquer conta
+    chave_existente = Conta.query.filter((Conta.chave_pix_email == chave_pix) |(Conta.chave_pix_aleatoria == chave_pix) |(Conta.numero_celular == chave_pix)).first()
+
+    if chave_existente:
         return jsonify({'mensagem': 'Chave PIX já cadastrada'}), 400
 
     # Obter a tabela de roteamento de bancos
     banco_urls = obter_tabela_roteamento()
 
     # Verificar em outros bancos conforme a tabela de roteamento
-    for tipo_banco, endereco_api in banco_urls.items():
-        # Montar a URL para fazer a requisição GET para verificar a chave PIX
-        url_verificacao = f"{endereco_api}/pix/chave?chave_pix={chave_pix}"
-        
-        # Fazer a requisição GET para verificar se a chave PIX existe no outro banco
-        try:
+    for cod_banco, endereco_api in banco_urls.items():
+        if cod_banco != BANCO_ID:
+            # Montar a URL para fazer a requisição GET para verificar a chave PIX
+            url_verificacao = f"{endereco_api}/pix/chave?chave_pix={chave_pix}"
+            # Fazer a requisição GET para verificar se a chave PIX existe no outro banco
             response = requests.get(url_verificacao)
             if response.status_code == 200:
                 resposta_json = response.json()
                 if resposta_json.get('pertence', False):
-                    return jsonify({'mensagem': f'Chave PIX já cadastrada no banco: {tipo_banco}'}), 400
-        except requests.exceptions.RequestException as e:
-            # Tratar erros de requisição, se necessário
-            print(f"Erro ao tentar acessar {endereco_api}: {str(e)}")
-            pass  # Você pode decidir o que fazer em caso de erro de requisição
+                    return jsonify({'mensagem': f'Chave PIX já cadastrada no banco: {cod_banco}'}), 400
 
     # Caso a chave PIX não exista no banco atual nem em outros bancos, cadastrar no banco atual
     if tipo_chave == 'Email':
@@ -732,6 +752,7 @@ def cadastrar_chave_pix():
 
 
 
+# Rota para apagar chave pix
 @app.route('/pix/apagar', methods=['POST'])
 def apagar_chave_pix():
     dados = request.json
@@ -742,8 +763,7 @@ def apagar_chave_pix():
     conta_obj = Conta.query.filter_by(agencia=agencia, conta=conta).first()
     if not conta_obj:
         return jsonify({'mensagem': 'Conta não encontrada'}), 404
-
-
+    # Deixa com valor none a chave a ser apagada
     elif tipo_chave == 'Email':
         conta_obj.chave_pix_email = None
     elif tipo_chave == 'Aleatória':
@@ -756,25 +776,26 @@ def apagar_chave_pix():
     db.session.commit()
     return jsonify({'mensagem': 'Chave PIX apagada com sucesso'}), 200
 
+
+
+# Rota para visualizar as chaves pix registradas
 @app.route('/pix/visualizar', methods=['GET'])
 def visualizar_chaves_pix():
     agencia = request.args.get('agencia')
     conta = request.args.get('conta')
-
+    # Filtra a conta
     conta_obj = Conta.query.filter_by(agencia=agencia, conta=conta).first()
     if not conta_obj:
         return jsonify({'mensagem': 'Conta não encontrada'}), 404
-
-    chaves_pix = {
-        'Email': conta_obj.chave_pix_email,
-        'Aleatória': conta_obj.chave_pix_aleatoria,
-        'Telefone': conta_obj.numero_celular
-    }
-
+    # Seleciona os tipos de chave
+    chaves_pix = {'Email': conta_obj.chave_pix_email,'Aleatória': conta_obj.chave_pix_aleatoria,'Telefone': conta_obj.numero_celular}
     # Filtrar chaves que não estão None
     chaves_pix_filtradas = {chave: valor for chave, valor in chaves_pix.items() if valor is not None}
-
     return jsonify({'chaves_pix': chaves_pix_filtradas}), 200
+
+
+
+
 
 if __name__ == '__main__':
     app.run(port=PORT, host=IP, debug=True)

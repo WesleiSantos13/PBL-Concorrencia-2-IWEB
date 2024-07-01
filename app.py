@@ -6,12 +6,12 @@ app = Flask(__name__)
 
 app.secret_key = 'chave_secreta'  
 
-
+#'+os.getenv('IP_neon')+'
 
 bank_urls = {
-    'bradesco': 'http://'+os.getenv('IP_bradesco')+':9635',
-    'neon': 'http://'+os.getenv('IP_neon')+':9636',
-    'picpay': 'http://'+os.getenv('IP_picpay')+':9637'
+    'bradesco': 'http://10.0.0.113:9635',
+    'neon': 'http://10.0.0.113:9636',
+    'picpay': 'http://10.0.0.113:9637'
 }
 
 @app.route('/')
@@ -134,10 +134,11 @@ def deposito(bank):
         }
 
         response = requests.post(f'{base_url}/depositar', json=dados)
+        data = response.json()
         if response.status_code == 200:
-            flash('Depósito realizado com sucesso!', 'success')
+            flash(f'{data['mensagem']}', 'success')
         else:
-            flash('Erro ao realizar depósito. Tente novamente.', 'error')
+            flash(f'{data['erro']}', 'error')
 
         return redirect(url_for('deposito', bank=bank))
 
@@ -205,10 +206,11 @@ def transferencia_ted(bank):
         }
 
         response = requests.post(f'{base_url}/transferencia/ted/enviar', json=dados)
+        data = response.json()
         if response.status_code == 200:
-            flash('Transferência realizada com sucesso', 'success')
+            flash(f'{data['mensagem']}', 'success')
         else:
-            flash('Erro ao realizar transferência: ' + response.json().get('message', 'Erro desconhecido'), 'error')
+            flash(f'{data['erro']}', 'error')
 
         return redirect(url_for('transferencia_ted', bank=bank))
 

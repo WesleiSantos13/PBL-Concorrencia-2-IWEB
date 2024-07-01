@@ -20,7 +20,7 @@
             {% endif %}
         {% endwith %}
         
-        <form action="/{{ bank }}/criar_conta" method="POST" id="form_criar_conta">
+        <form action="/{{ bank }}/criar_conta" method="POST" id="form_criar_conta" onsubmit="return validateForm()">
             <input type="hidden" name="bank" value="{{ bank }}">
             
             <label for="tipo_conta">Tipo de Conta:</label>
@@ -43,6 +43,7 @@
             <div id="campos_adicionais_conjunta" style="display: none;">
                 <label for="quantidade_titulares">Quantidade de Titulares:</label>
                 <select id="quantidade_titulares" name="quantidade_titulares" onchange="mostrarCamposTitulares(this.value)">
+                    <option value="0">Selecione...</option>
                     <option value="2">2</option>
                     <option value="3">3</option>
                     <option value="4">4</option>
@@ -64,7 +65,7 @@
                 <input type="password" id="senha_juridica" name="senha_juridica">
             </div>
 
-            <button type="submit" class="nav-button" onclick="navigate('criar_conta')">Criar Conta</button>
+            <button type="submit" class="nav-button">Criar Conta</button>
         </form>
 
         <!-- Botão Voltar -->
@@ -79,6 +80,7 @@
     </div>
 
     <script>
+        // Função para mostrar campos adicionais de acordo com o tipo de conta selecionado
         function mostrarCamposAdicionais(tipoConta) {
             document.getElementById('campos_adicionais_individual').style.display = 'none';
             document.getElementById('campos_adicionais_conjunta').style.display = 'none';
@@ -93,11 +95,17 @@
             }
         }
 
+        // Função para mostrar os campos para titulares de acordo com a quantidade selecionada
         function mostrarCamposTitulares(quantidadeTitulares) {
             var camposTitulares = document.getElementById('campos_titulares');
             camposTitulares.innerHTML = ''; // Limpa os campos anteriores
 
-            for (var i = 1; i <= quantidadeTitulares; i++) {
+            if (quantidadeTitulares === '0') {
+                alert('Selecione a quantidade de titulares.');
+                return;
+            }
+
+            for (var i = 1; i <= parseInt(quantidadeTitulares); i++) {
                 var divTitular = document.createElement('div');
                 divTitular.classList.add('titular');
 
@@ -139,15 +147,8 @@
             mensagemSucesso.style.display = 'block';
         }
 
-        function navigate(page) {
-            const bank = document.querySelector('input[name="bank"]').value;
-            if (bank) {
-                window.location.href = `/${bank}/${page}`;
-            } else {
-                alert('Por favor, selecione um banco primeiro.');
-            }
-        }
 
+        // Função para atualizar as cores da página conforme o banco selecionado
         function updateColors() {
             const bank = document.querySelector('input[name="bank"]').value;
             const pageTitle = document.querySelector('.page-title');
@@ -172,7 +173,61 @@
             window.location.href = '/';
         }
 
-        // Set initial button colors
+        // Função para validar o formulário antes do envio
+        function validateForm() {
+            const tipoConta = document.getElementById('tipo_conta').value;
+            if (tipoConta === '' || tipoConta === 'Selecione...') {
+                alert('Por favor, selecione o tipo de conta.');
+                return false; // Impede o envio do formulário
+            }
+
+            if (tipoConta === 'PFI') {
+                const nome = document.getElementById('nome').value;
+                const cpf = document.getElementById('cpf_cnpj').value;
+                const senha = document.getElementById('senha').value;
+
+                if (nome === '' || cpf === '' || senha === '') {
+                    alert('Por favor, preencha todos os campos para conta individual.');
+                    return false;
+                }
+            } else if (tipoConta === 'PFC') {
+                const quantidadeTitulares = document.getElementById('quantidade_titulares').value;
+                if (quantidadeTitulares === '0') {
+                    alert('Por favor, selecione a quantidade de titulares.');
+                    return false; // Impede o envio do formulário
+                }
+
+                const senhaConjunta = document.getElementById('senha_conjunta').value;
+                if (senhaConjunta === '') {
+                    alert('Por favor, preencha a senha da conta conjunta.');
+                    return false;
+                }
+
+                // Verifica cada titular
+                for (var i = 1; i <= parseInt(quantidadeTitulares); i++) {
+                    const nomeTitular = document.getElementById('nome_titular' + i).value;
+                    const cpfTitular = document.getElementById('cpf_cnpj_titular' + i).value;
+
+                    if (nomeTitular === '' || cpfTitular === '') {
+                        alert('Por favor, preencha todos os campos para os titulares.');
+                        return false;
+                    }
+                }
+            } else if (tipoConta === 'PJ') {
+                const razaoSocial = document.getElementById('razao_social').value;
+                const cnpj = document.getElementById('cnpj').value;
+                const senhaJuridica = document.getElementById('senha_juridica').value;
+
+                if (razaoSocial === '' || cnpj === '' || senhaJuridica === '') {
+                    alert('Por favor, preencha todos os campos para conta jurídica.');
+                    return false;
+                }
+            }
+
+            return true; // Permite o envio do formulário
+        }
+
+        // Atualizar cores conforme o banco
         updateColors();
     </script>
 </body>

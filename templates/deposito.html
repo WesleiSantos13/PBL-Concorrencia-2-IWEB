@@ -28,7 +28,11 @@
             <input type="number" id="valor" name="valor" required>
            
             <label for="banco_destino">Banco destino:</label>
-            <input type="text" id="banco_destino" name="banco_destino" required>
+            <select id="banco_destino" name="banco_destino" required>
+                <option value="237">Bradesco</option>
+                <option value="536">Neon</option>
+                <option value="380">PicPay</option>
+            </select>
 
             <button type="submit" class="nav-button {{ bank }}">Depositar</button>
         </form>

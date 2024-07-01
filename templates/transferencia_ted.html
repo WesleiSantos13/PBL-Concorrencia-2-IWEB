@@ -28,8 +28,12 @@
             <label for="valor">Valor:</label>
             <input type="number" step="0.01" id="valor" name="valor" required>
 
-            <label for="banco_destino">Banco Destino:</label>
-            <input type="text" id="banco_destino" name="banco_destino" required>
+            <label for="banco_destino">Banco destino:</label>
+            <select id="banco_destino" name="banco_destino" required>
+                <option value="237">Bradesco</option>
+                <option value="536">Neon</option>
+                <option value="380">PicPay</option>
+            </select>
 
             <button type="submit" class="nav-button {{ bank }}">Enviar</button>
         </form>
