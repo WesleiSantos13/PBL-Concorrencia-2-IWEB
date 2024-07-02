@@ -23,6 +23,7 @@
         <form action="/{{ bank }}/criar_conta" method="POST" id="form_criar_conta" onsubmit="return validateForm()">
             <input type="hidden" name="bank" value="{{ bank }}">
             
+            <!-- Seleção do tipo de conta -->
             <label for="tipo_conta">Tipo de Conta:</label>
             <select id="tipo_conta" name="tipo_conta" onchange="mostrarCamposAdicionais(this.value)">
                 <option value="">Selecione...</option>
@@ -31,6 +32,7 @@
                 <option value="PJ">Conta Jurídica</option>
             </select>
 
+            <!-- Campos adicionais para Conta Individual -->
             <div id="campos_adicionais_individual" style="display: none;">
                 <label for="nome">Nome:</label>
                 <input type="text" id="nome" name="nome">
@@ -40,6 +42,7 @@
                 <input type="password" id="senha" name="senha">
             </div>
 
+            <!-- Campos adicionais para Conta Conjunta -->
             <div id="campos_adicionais_conjunta" style="display: none;">
                 <label for="quantidade_titulares">Quantidade de Titulares:</label>
                 <select id="quantidade_titulares" name="quantidade_titulares" onchange="mostrarCamposTitulares(this.value)">
@@ -56,6 +59,7 @@
                 <input type="password" id="senha_conjunta" name="senha_conjunta">
             </div>
 
+            <!-- Campos adicionais para Conta Jurídica -->
             <div id="campos_adicionais_juridica" style="display: none;">
                 <label for="razao_social">Razão Social:</label>
                 <input type="text" id="razao_social" name="razao_social">
@@ -65,6 +69,7 @@
                 <input type="password" id="senha_juridica" name="senha_juridica">
             </div>
 
+            <!-- Botão para criar conta -->
             <button type="submit" class="nav-button">Criar Conta</button>
         </form>
 
@@ -99,11 +104,6 @@
         function mostrarCamposTitulares(quantidadeTitulares) {
             var camposTitulares = document.getElementById('campos_titulares');
             camposTitulares.innerHTML = ''; // Limpa os campos anteriores
-
-            if (quantidadeTitulares === '0') {
-                alert('Selecione a quantidade de titulares.');
-                return;
-            }
 
             for (var i = 1; i <= parseInt(quantidadeTitulares); i++) {
                 var divTitular = document.createElement('div');
@@ -146,7 +146,6 @@
 
             mensagemSucesso.style.display = 'block';
         }
-
 
         // Função para atualizar as cores da página conforme o banco selecionado
         function updateColors() {

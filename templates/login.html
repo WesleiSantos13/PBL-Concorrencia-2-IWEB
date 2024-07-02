@@ -8,6 +8,7 @@
 <body>
     <div class="container">
         <h2 class="page-title">Fazer Login</h2>
+        <!-- Exibir mensagens flash -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -15,6 +16,8 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
+        
+        <!-- Formulário de login -->
         <form action="{{ url_for('login', bank=bank) }}" method="post">
             <input type="hidden" name="bank" value="{{ bank }}">
             
@@ -33,19 +36,11 @@
             <button type="submit" class="nav-button">Login</button>
         </form>
 
+        <!-- Botão para voltar para a página inicial -->
         <button onclick="voltarParaIndex()" class="nav-button">Voltar</button>
     </div>
     
     <script>
-        // Função para navegação
-        function navigate(page) {
-            const bank = document.querySelector('input[name="bank"]').value;
-            if (bank) {
-                window.location.href = `/${bank}/${page}`;
-            } else {
-                alert('Por favor, selecione um banco primeiro.');
-            }
-        }
 
         // Função para atualizar as cores conforme o banco
         function updateColors() {

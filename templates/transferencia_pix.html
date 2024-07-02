@@ -8,6 +8,8 @@
 <body>
     <div class="container">
         <h2 class="page-title">Realizar Transferência PIX</h2>
+        
+        <!-- Exibir mensagens flash -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -15,6 +17,8 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
+        
+        <!-- Formulário de transferência PIX -->
         <form action="{{ url_for('transferencia_pix', bank=bank) }}" method="post">
             <label for="chave_pix_destino">Chave PIX de Destino:</label>
             <input type="text" id="chave_pix_destino" name="chave_pix_destino" required>
@@ -23,6 +27,7 @@
             {% if contas %}
                 {% for conta in contas %}
                     <div>
+                        <!-- Contas vinculadas ao CPF -->
                         <input type="hidden" name="contas_origem" value="{{ conta['banco'] }},{{ conta['agencia'] }},{{ conta['conta'] }},{{ conta['saldo'] }}">
                         <p>Banco: {{ conta['banco'] }}, Agência: {{ conta['agencia'] }}, Conta: {{ conta['conta'] }}, Saldo: R$ {{ conta['saldo'] }}</p>
                         <label for="valor_{{ conta['banco'] }}_{{ conta['agencia'] }}_{{ conta['conta'] }}">Valor a Transferir:</label>
@@ -35,6 +40,8 @@
 
             <button type="submit" class="nav-button {{ bank }}">Enviar</button>
         </form>
+        
+        <!-- Navegação de retorno ao dashboard -->
         <nav>
             <ul>
                 <li><a href="{{ url_for('dashboard', bank=bank) }}" class="nav-button {{ bank }}">Voltar ao Dashboard</a></li>
@@ -43,6 +50,7 @@
     </div>
 
     <script>
+        // Função para atualizar as cores conforme o banco selecionado
         function updateColors() {
             const bank = "{{ bank }}";
             const pageTitle = document.querySelector('.page-title');

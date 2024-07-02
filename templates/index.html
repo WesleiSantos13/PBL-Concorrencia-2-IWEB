@@ -20,6 +20,7 @@
             {% endif %}
         {% endwith %}
 
+        <!-- Formulário de seleção do banco -->
         <form id="select-bank-form">
             <label for="select-bank">Selecione o Banco:</label>
             <select id="select-bank" name="select-bank" onchange="updateColors()">
@@ -29,6 +30,8 @@
                 <option value="picpay">PicPay</option>
             </select>
         </form>
+        
+        <!-- Navegação -->
         <nav>
             <ul>
                 <li><a href="#" class="nav-button" onclick="navigate('login')">Fazer login</a></li>
@@ -38,6 +41,7 @@
     </div>
 
     <script>
+        // Função para redirecionar para a página de login ou criação de conta do banco selecionado
         function navigate(page) {
             const bank = document.getElementById('select-bank').value;
             if (bank) {
@@ -47,6 +51,7 @@
             }
         }
 
+        // Função para atualizar as cores com base no banco selecionado
         function updateColors() {
             const bank = document.getElementById('select-bank').value;
             const buttons = document.querySelectorAll('.nav-button');
@@ -66,7 +71,7 @@
             }
         }
 
-        // Set initial button colors
+        // Define as cores iniciais dos botões
         updateColors();
     </script>
 </body>

@@ -8,6 +8,8 @@
 <body>
     <div class="container">
         <h2 class="page-title">Fazer Depósito</h2>
+        
+        <!-- Exibir mensagens flash -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -15,6 +17,8 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
+        
+        <!-- Formulário de depósito -->
         <form action="/{{ bank }}/deposito" method="post">
             <input type="hidden" name="bank" value="{{ bank }}">
             
@@ -36,6 +40,8 @@
 
             <button type="submit" class="nav-button {{ bank }}">Depositar</button>
         </form>
+        
+        <!-- Navegação de retorno ao dashboard -->
         <nav>
             <ul>
                 <li><a href="{{ url_for('dashboard', bank=bank) }}" class="nav-button {{ bank }}">Voltar ao Dashboard</a></li>
@@ -44,6 +50,7 @@
     </div>
 
     <script>
+        // Função para atualizar as cores conforme o banco selecionado
         function updateColors() {
             const bank = document.querySelector('input[name="bank"]').value;
             const pageTitle = document.querySelector('.page-title');
@@ -63,12 +70,7 @@
             }
         }
 
-        // Função para voltar para o index
-        function voltarParaIndex() {
-            window.location.href = '/';
-        }
-
-        // Set initial button colors
+        // Define as cores iniciais dos botões
         updateColors();
     </script>
 </body>

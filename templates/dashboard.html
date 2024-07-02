@@ -20,7 +20,10 @@
             {% endif %}
         {% endwith %}
 
+        <!-- Exibir saldo disponível -->
         <p><strong>Saldo Disponível:</strong> R$ {{ saldo }}</p>
+        
+        <!-- Navegação para diferentes funcionalidades do banco -->
         <nav>
             <ul>
                 <li><a href="{{ url_for('deposito', bank=bank) }}" class="nav-button {{ bank }}">Fazer Depósito</a></li>
