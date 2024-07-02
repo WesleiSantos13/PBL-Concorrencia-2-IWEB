@@ -57,30 +57,40 @@ def acquire_lock(resource, timeout=10):
     start_time = time.time()
     while time.time() - start_time < timeout:
         try:
+            # Tenta obter o lock para o recurso específico
             lock = Lock.query.filter_by(resource=resource).with_for_update(nowait=True).first()
+            
+            # Se o lock existe e não está bloqueado, bloqueia-o
             if lock and not lock.locked:
                 lock.locked = True
                 db.session.commit()
                 return True
+            # Se o lock não existe, cria um novo
             elif not lock:
                 new_lock = Lock(resource=resource, locked=True)
                 db.session.add(new_lock)
                 db.session.commit()
                 return True
         except SQLAlchemyError:
-            db.session.rollback()
-        time.sleep(0.1)
-    return False
+            db.session.rollback()  # Em caso de erro, faz rollback da transação
+        time.sleep(0.1)  # Aguarda um curto período antes de tentar novamente
+    return False  # Retorna False se o timeout for atingido sem conseguir o lock
 
 # Função para liberar um bloqueio em um recurso específico
 def release_lock(resource):
     try:
+        # Busca pelo lock associado ao recurso
         lock = Lock.query.filter_by(resource=resource).first()
+        
+        # Se o lock existe e está bloqueado, libera-o
         if lock and lock.locked:
             lock.locked = False
             db.session.commit()
     except SQLAlchemyError:
-        db.session.rollback()
+        db.session.rollback()  # Em caso de erro, faz rollback da transação
+
+
+
 
 
 # Inicializa o banco de dados
