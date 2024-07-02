@@ -107,6 +107,8 @@ Após o acesso, é necessário:
 
      - Sair:  
        O usuário volta para a tela inicial.
+       
+__Execução dos containers:__
 
 
 
