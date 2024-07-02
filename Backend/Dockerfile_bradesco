@@ -8,7 +8,7 @@ WORKDIR /app
 COPY Bradesco.py .
 
 # Instalar as dependências
-RUN pip install --no-cache-dir flask flask_sqlalchemy requests
+RUN pip install --no-cache-dir flask flask_sqlalchemy requests tabulate
 
 # Expor a porta em que o banco vai rodar
 EXPOSE 9635

@@ -8,7 +8,7 @@ WORKDIR /app
 COPY Picpay.py .
 
 # Instalar as dependências
-RUN pip install --no-cache-dir flask SQLAlchemy requests
+RUN pip install --no-cache-dir flask SQLAlchemy requests tabulate
 
 # Expor a porta em que o banco vai rodar
 EXPOSE 9637
