@@ -44,4 +44,24 @@ __Bancos(Bradesco.py, Picpay.py e Neon.py)__
 
 Os bancos são responsáveis por disponibilizar serviços à aplicação, como movimentação de saldo através de transferências, depósitos e saques. Além disso, cada banco deve registrar suas rotas na tabela de roteamento e consultar essa tabela para realizar operações distribuídas de forma eficiente.  
 
-Iniciar bancos: Depois da tabela de roteamento executada
+Iniciar bancos: Após a tabela de roteamento ser iniciada com sucesso, você pode proceder com a execução dos bancos. Para isso, execute os arquivos Bradesco.py, Picpay.py e Neon.py utilizando python. Depois que esses servidores estiverem em execução, o sistema estará pronto para receber requisições da aplicação.
+
+__Aplicação (app.py)__
+
+A aplicação é responsável por fornecer a interface interativa que permite aos clientes acessar as funcionalidades bancárias. Através desta interface, os clientes podem realizar operações bancárias utilizando as rotas registradas pelos bancos.
+
+Iniciar aplicação: Execute o arquivo app.py utilizando python. O servidor mostrará a rota de acesso no terminal.  
+
+Exemplo:
+
+    $ python app.py  # Execução
+    Serving Flask app 'app'
+    Debug mode: on
+    Running on http://172.31.160.1:9999 # Rota de acesso
+    Restarting with stat
+    Debugger is active!
+    Debugger PIN: 746-199-761
+Dessa forma, basta acessar a rota no navegador (http://172.31.160.1:9999) para que o cliente possa utilizar a aplicação e interagir com os serviços bancários disponibilizados.
+
+
+
