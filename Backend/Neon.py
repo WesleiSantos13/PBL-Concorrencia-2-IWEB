@@ -8,7 +8,8 @@ import random
 import time
 import os
 from requests.exceptions import RequestException
-
+import threading
+from tabulate import tabulate
 
 ##### Servidor do Banco Neon #######
 
@@ -848,8 +849,38 @@ def visualizar_chaves_pix():
     return jsonify({'chaves_pix': chaves_pix_filtradas}), 200
 
 
+# Função para exibir o banco de dados periodicamente
+# Função para exibir o banco de dados periodicamente
+def ver_database(intervalo):
+    while True:
+        with app.app_context():
+            try:
+                contas = Conta.query.all()
 
+                # Preparando os dados para formatação em tabela
+                table_data = []
+                for conta in contas:
+                    titulares_info = []
+                    for titular in conta.titulares:
+                        titular_info = f"{titular.nome} ({titular.cpf_ou_cnpj})"
+                        titulares_info.append(titular_info)
+                    titulares_str = ', '.join(titulares_info)
+                    table_data.append([conta.id, conta.agencia, conta.conta, conta.saldo, titulares_str, conta.tipo_conta])
 
+                # Exibindo os dados em formato de tabela
+                headers = ['ID', 'Agência', 'Conta', 'Saldo', 'Titulares', 'Tipo de conta']
+                print(tabulate(table_data, headers=headers))
 
+                # Esperando o intervalo especificado em segundos
+                time.sleep(intervalo)
+            except SQLAlchemyError as e:
+                print({'error': str(e)})
+                time.sleep(intervalo)
+                
 if __name__ == '__main__':
+    # Criando uma thread para executar ver_database
+    thread = threading.Thread(target=ver_database, args=(10,))
+    thread.start()
+    
+    # Executando o servidor Flask na thread principal
     app.run(port=PORT, host=IP, debug=True)
