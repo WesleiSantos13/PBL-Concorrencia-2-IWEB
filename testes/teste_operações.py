@@ -1,7 +1,9 @@
 import requests
 import threading
 
-BASE_URL = "http://172.31.160.1:9635"  # URL base do seu aplicativo Flask
+# Teste usado para testar algumas operações sendo executadas simultaneamente
+
+BASE_URL = "http://172.31.160.1:9635"  
 
 def realizar_deposito(agencia, conta, valor, banco_destino):
     response = requests.post(f"{BASE_URL}/depositar", json={

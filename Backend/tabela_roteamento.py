@@ -1,5 +1,8 @@
 from flask import Flask, request, jsonify
 import socket
+
+# Tabela de roteamento, criada para armazenar rotas dos bancos
+
 app = Flask(__name__)
 
 ip = socket.gethostbyname(socket.gethostname())
@@ -15,15 +18,18 @@ def carregar_tabela_roteamento():
 def atualizar_tabela_roteamento(banco_id, url):
     tabela_roteamento[banco_id] = url
 
+# Rota para os bancos pegarem as rotas dos outros bancos
 @app.route('/get_banks', methods=['GET'])
 def get_tabela_roteamento():
     return jsonify(carregar_tabela_roteamento()), 200
 
+# Rota para um banco registrar sua rota na tabela
 @app.route('/put_banks', methods=['PUT'])
 def put_tabela_roteamento():
     dados = request.json
     banco_id = dados.get('banco_id')
     url = dados.get('url')
+    
     if not banco_id or not url:
         return jsonify({'erro': 'Dados inválidos'}), 400
 

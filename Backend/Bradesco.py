@@ -9,6 +9,8 @@ import time
 import os
 from requests.exceptions import RequestException
 
+##### Servidor do Banco Bradesco #######
+
 ip_table_router ='172.31.160.1' #os.getenv('IP_ROUTER')
 url_table_router = 'http://' + ip_table_router + ':4326'
 
@@ -117,7 +119,7 @@ atualizar_tabela_roteamento(BANCO_ID, URL_SERVER)
 
 # Gera uma agência única
 def gerar_agencia():
-    return f"{random.randint(3000, 3200)}"
+    return f"{random.randint(3000, 3800)}"
 
 # Gera um número de conta único
 def gerar_conta():
@@ -188,6 +190,10 @@ def depositar():
     conta_destino = dados['conta']
     valor = dados['valor']
     banco_destino = dados['banco_destino']
+
+    # Se o valor a ser depositado estiver zerado
+    if valor == 0:
+        return jsonify({'erro': 'Você não pode depositar 0 reais'}), 423
 
     # Se o depósito for para o mesmo banco de destino
     if banco_destino == BANCO_ID:
@@ -311,6 +317,11 @@ def enviar_transferencia():
     valor = dados['valor']
     banco_destino = dados['banco_destino']
 
+    # Se o valor a ser transferido estiver zerado
+    if valor == 0:
+        return jsonify({'erro': 'Você não pode transferir 0 reais'}), 423
+
+    # Filtra a conta
     conta_origem_obj = Conta.query.filter_by(agencia=agencia_origem, conta=conta_origem).first()
     # Se a conta não existir
     if not conta_origem_obj:
@@ -376,9 +387,6 @@ def enviar_transferencia():
                 return jsonify({'mensagem': 'Transferência realizada com sucesso'}), 200
             except RequestException:
                 return jsonify({'erro': 'Falha na comunicação com o banco destino. Tente novamente mais tarde.'}), 503
-            except SQLAlchemyError:
-                db.session.rollback()
-                return jsonify({'erro': 'Erro ao processar a transação. Tente novamente mais tarde.'}), 500
     finally:
         # Libera o bloqueio
         release_lock(lock_key_origem)
@@ -809,8 +817,6 @@ def apagar_chave_pix():
         conta_obj.chave_pix_aleatoria = None
     elif tipo_chave == 'Telefone':
         conta_obj.numero_celular = None
-    else:
-        return jsonify({'mensagem': 'Chave PIX não encontrada ou tipo inválido'}), 400
 
     db.session.commit()
     return jsonify({'mensagem': 'Chave PIX apagada com sucesso'}), 200
