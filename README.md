@@ -69,44 +69,44 @@ Após o acesso, é necessário:
    - Neon
    - Picpay
  * Selecionar a opção de operação (Estágio 1):
-   - Fazer login
+   - Fazer login:  
      Após inserir suas credenciais, se login for feito com sucesso será exibido o saldo e a opção de demais operações, como transferência e saque.
      Se o login falhar, o usuário não tem acesso as demais operações de cliente do banco.
      
-   - Criar conta
+   - Criar conta:  
       O usuário pode escolher ente conta pessoa fisica individual (PFI), conta pessoa fisica conjunta (PFC) e conta juridica (PJ).
       O usuário pode criar apenas uma conta individual com o seu CPF, e varias contas conjuntas, contanto que seja com titulares diferentes.
       Para conta juridica também só é possivel criar uma conta com o mesmo cnpj.
      
-  *  Selecionar a opção de operação (Estágio 2- pós login):
-     Após fazer o login as operações disponíveis na dashboard são:
-     - Fazer depósito
+  *  Selecionar a opção de operação (Estágio 2- pós login):  
+     Após fazer o login as operações disponíveis na dashboard são:  
+     - Fazer depósito:  
        O usuário pode digitar qualquer conta que deseja fazer o depósito, informar o valor e selecionar o banco de destino.
        Caso a conta não seja encontrada ou ocorra um problema de comunicação com o banco de destino o depósito falha.
        Se o valor do depósito for 0, o mesmo não ocorre.
        
-     - Realizar transferência TED
+     - Realizar transferência TED:  
        O usuário pode digitar qualquer conta que deseja fazer a transferência, informar o valor e selecionar o banco de destino. Se o saldo for suficiente a transação ocorre com sucesso.
        Caso a conta não seja encontrada ou ocorra um problema de comunicação com o banco de destino o transação falha.
        Se o valor da transferência TED for 0, a mesma não ocorre.
        
-     - Realizar transferência PIX
+     - Realizar transferência PIX:  
        O usuário pode digitar qualquer chave pix que deseja fazer a transferência, informar o valor que vai transferir de cada conta que possui. Se o saldo for suficiente a transação ocorre com sucesso.
        Caso a chave pix não tenha registro ou ocorra um problema de comunicação com o banco que a chave pix pertence a transação falha.
 
-     - Sacar
+     - Sacar:  
        O usuário pode sacar valores da sua conta que está logado.
        Se o valor a ser sacado for maior que o valor do saldo, o saque falha.
        Se o valor a ser sacado for 0, o saque falha.
 
-     - Minhas chaves pix
+     - Minhas chaves pix:  
        O usuário pode vizualizar suas chaves pix.
        O usuário pode cadastrar uma chave pix que não exista em outra conta.
        Os tipos de chave são email, chave aléatória e telefone.
        O usuário pode apagar uma chave pix que tenha registrado.
 
-     - Sair
-       O usuário volta para a tela inicial
+     - Sair:  
+       O usuário volta para a tela inicial.
 
 
 
