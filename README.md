@@ -31,7 +31,7 @@ Por fim, instalar uma biblioteca adicional para exibir continualmente as informa
     pip install tabulate
 
 
-__Utilização do Programa (Execução)__  
+__UTILIZAÇÃO DO SISTEMA (Execução)__  
 
 __Tabela de Roteamento (table_router.py)__  
 
