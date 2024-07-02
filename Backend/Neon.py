@@ -8,7 +8,7 @@ import random
 import time
 import os
 
-ip_table_router = '10.0.0.113'
+ip_table_router = '172.31.160.1'
 url_table_router = 'http://' + ip_table_router + ':4326'
 
 # Configuração do banco de dados

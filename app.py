@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 import requests
 import os
 import socket
+from requests.exceptions import RequestException
 app = Flask(__name__)
 
 app.secret_key = 'chave_secreta'  
@@ -9,9 +10,9 @@ app.secret_key = 'chave_secreta'
 #'+os.getenv('IP_neon')+'
 
 bank_urls = {
-    'bradesco': 'http://10.0.0.113:9635',
-    'neon': 'http://10.0.0.113:9636',
-    'picpay': 'http://10.0.0.113:9637'
+    'bradesco': 'http://172.31.160.1:9635',
+    'neon': 'http://172.31.160.1:9636',
+    'picpay': 'http://172.31.160.1:9637'
 }
 
 @app.route('/')
@@ -133,12 +134,15 @@ def deposito(bank):
             'banco_destino': banco_destino
         }
 
-        response = requests.post(f'{base_url}/depositar', json=dados)
-        data = response.json()
-        if response.status_code == 200:
-            flash(f'{data['mensagem']}', 'success')
-        else:
-            flash(f'{data['erro']}', 'error')
+        try:
+            response = requests.post(f'{base_url}/depositar', json=dados)
+            data = response.json()
+            if response.status_code == 200:
+                flash(data['mensagem'], 'success')
+            else:
+                flash(data['erro'], 'error')
+        except RequestException:
+            flash(data['erro'], 'error')
 
         return redirect(url_for('deposito', bank=bank))
 
@@ -229,9 +233,6 @@ def obter_contas_vinculadas(cpf_ou_cnpj, bank):
 @app.route('/<bank>/transferencia_pix', methods=['GET', 'POST'])
 def transferencia_pix(bank):
     base_url = bank_urls.get(bank)
-    if not base_url:
-        flash('Banco não encontrado.', 'error')
-        return redirect(url_for('dashboard', bank=bank))
 
     if request.method == 'POST':
         chave_pix_destino = request.form['chave_pix_destino']
@@ -254,10 +255,11 @@ def transferencia_pix(bank):
         }
 
         response = requests.post(f'{base_url}/transferencia/pix/enviar', json=dados)
+        data = response.json()
         if response.status_code == 200:
-            flash('Transferência PIX realizada com sucesso', 'success')
+            flash(data['mensagem'], 'success')
         else:
-            flash('Erro ao realizar transferência PIX: ' + response.json().get('message', 'Erro desconhecido'), 'error')
+            flash(data['erro'], 'error')
 
         return redirect(url_for('transferencia_pix', bank=bank))
 
@@ -320,9 +322,6 @@ def sacar(bank):
 @app.route('/<bank>/minhas_chaves_pix', methods=['GET'])
 def minhas_chaves_pix(bank):
     base_url = bank_urls.get(bank)
-    if not base_url:
-        flash('Banco não encontrado.', 'error')
-        return redirect(url_for('dashboard', bank=bank))
 
     agencia = session.get('agencia')
     conta = session.get('conta')
@@ -339,9 +338,6 @@ def minhas_chaves_pix(bank):
 @app.route('/<bank>/cadastrar_chave_pix', methods=['POST'])
 def cadastrar_chave_pix(bank):
     base_url = bank_urls.get(bank)
-    if not base_url:
-        flash('Banco não encontrado.', 'error')
-        return redirect(url_for('minhas_chaves_pix', bank=bank))
 
     agencia = session.get('agencia')
     conta = session.get('conta')
@@ -356,10 +352,11 @@ def cadastrar_chave_pix(bank):
     }
 
     response = requests.post(f'{base_url}/pix/cadastrar', json=dados)
+    data=response.json()
     if response.status_code == 200:
-        flash('Chave PIX cadastrada com sucesso!', 'success')
+        flash(data['mensagem'], 'success')
     else:
-        flash('Erro ao cadastrar chave PIX.', 'error')
+        flash(data['mensagem'], 'error')
 
     return redirect(url_for('minhas_chaves_pix', bank=bank))
 
