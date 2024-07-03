@@ -202,9 +202,9 @@ def depositar():
     valor = dados['valor']
     banco_destino = dados['banco_destino']
 
-    # Se o valor a ser depositado estiver zerado
-    if valor == 0:
-        return jsonify({'erro': 'Você não pode depositar 0 reais'}), 423
+    # Se o valor a ser depositado estiver zerado ou negativo
+    if valor <= 0:
+        return jsonify({'erro': f'Você não pode depositar {valor} reais'}), 423
 
     # Se o depósito for para o mesmo banco de destino
     if banco_destino == BANCO_ID:
@@ -331,9 +331,9 @@ def enviar_transferencia():
     valor = dados['valor']
     banco_destino = dados['banco_destino']
 
-    # Se o valor a ser transferido estiver zerado
-    if valor == 0:
-        return jsonify({'erro': 'Você não pode transferir 0 reais'}), 423
+    # Se o valor a ser transferido estiver zerado ou negativo
+    if valor <= 0:
+        return jsonify({'erro': f'Você não pode transferir {valor} reais'}), 423
 
     # Filtra a conta
     conta_origem_obj = Conta.query.filter_by(agencia=agencia_origem, conta=conta_origem).first()
@@ -491,9 +491,9 @@ def enviar_transferencia_pix():
     contas_origem = dados['contas_origem']  # Lista de dicionários com agencia, conta e valor a ser transferido de cada conta
     valor_total = sum(conta['valor'] for conta in contas_origem)
     
-    # Se o valor da transferência for 0 não deve existir transferência
-    if valor_total == 0:
-        return jsonify({'erro': 'Valor a transferir zerado'}), 404
+    # Se o valor da transferência for menor ou igual a 0 não deve existir transferência
+    if valor_total <= 0:
+        return jsonify({'erro': 'Valor a transferir zerado ou negativo'}), 404
     
     # Identificar o banco destino baseado na chave PIX
     banco_destino = identificar_banco_destino(chave_pix_destino)
