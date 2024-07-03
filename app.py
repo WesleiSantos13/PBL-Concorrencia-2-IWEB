@@ -11,12 +11,11 @@ app = Flask(__name__)
 
 app.secret_key = 'chave_secreta'  
 
-#'+os.getenv('IP_neon')+'
-
+# Rotas dos bancos
 bank_urls = {
-    'bradesco': 'http://172.31.160.1:9635',
-    'neon': 'http://172.31.160.1:9636',
-    'picpay': 'http://172.31.160.1:9637'
+    'bradesco': 'http://'+os.getenv('IP_bradesco')+':9635',
+    'neon': 'http://'+os.getenv('IP_neon')+':9636',
+    'picpay': 'http://'+os.getenv('IP_picpay')+':9637'
 }
 
 # Rota para a tela inial (index)
@@ -39,34 +38,40 @@ def login(bank):
         senha = request.form['senha']
         cpf_ou_cnpj = request.form['cpf_ou_cnpj']
 
-        # Envia os dados do formulário para a API de login do banco
-        response = requests.post(f'{base_url}/login', json={
-            'agencia': agencia,
-            'conta': conta,
-            'senha': senha,
-            'cpf_ou_cnpj': cpf_ou_cnpj
-        })
+        try:
+            # Envia os dados do formulário para a API de login do banco
+            response = requests.post(f'{base_url}/login', json={
+                'agencia': agencia,
+                'conta': conta,
+                'senha': senha,
+                'cpf_ou_cnpj': cpf_ou_cnpj
+            })
 
-        # Se o login foi bem-sucedido
-        if response.status_code == 200:
-            # Armazena os dados da sessão
-            session['agencia'] = agencia
-            session['conta'] = conta
-            session['bank'] = bank
-            session['cpf_ou_cnpj'] = cpf_ou_cnpj
-            # Exibe uma mensagem de sucesso
-            flash('Login realizado com sucesso!', 'success')
-            # Redireciona para o painel de controle
-            return redirect(url_for('dashboard', bank=bank))
-        else:
-            # Exibe uma mensagem de erro caso as credenciais sejam inválidas
-            flash('Falha no login. Verifique suas credenciais.', 'error')
+            # Se o login foi bem-sucedido
+            if response.status_code == 200:
+                # Armazena os dados da sessão
+                session['agencia'] = agencia
+                session['conta'] = conta
+                session['bank'] = bank
+                session['cpf_ou_cnpj'] = cpf_ou_cnpj
+                # Exibe uma mensagem de sucesso
+                flash('Login realizado com sucesso!', 'success')
+                # Redireciona para o painel de controle
+                return redirect(url_for('dashboard', bank=bank))
+            else:
+                # Exibe uma mensagem de erro caso as credenciais sejam inválidas
+                flash('Falha no login. Verifique suas credenciais.', 'error')
+
+        except RequestException:
+            # Trata erros de requisição
+            flash(f'Erro ao conectar com o banco {bank}', 'error')
 
         # Redireciona de volta para a página de login
         return redirect(url_for('login', bank=bank))
 
     # Renderiza a página de login para requisições GET
     return render_template('login.html', bank=bank)
+
 
 
 
@@ -82,64 +87,70 @@ def criar_conta(bank):
     if request.method == 'POST':
         tipo_conta = request.form['tipo_conta']
 
-        # Criação de conta PFI (Pessoa Física Individual)
-        if tipo_conta == 'PFI':
-            nome = request.form['nome']
-            cpf_ou_cnpj = request.form['cpf_cnpj']
-            senha = request.form['senha']
+        try:
+            # Criação de conta PFI (Pessoa Física Individual)
+            if tipo_conta == 'PFI':
+                nome = request.form['nome']
+                cpf_ou_cnpj = request.form['cpf_cnpj']
+                senha = request.form['senha']
 
-            # Envia os dados para a API de criação de conta do banco
-            response = requests.post(f'{base_url}/criar_conta', json={
-                'nome': nome,
-                'cpf_ou_cnpj': cpf_ou_cnpj,
-                'senha': senha,
-                'tipo_conta': 'PFI'
-            })
+                # Envia os dados para a API de criação de conta do banco
+                response = requests.post(f'{base_url}/criar_conta', json={
+                    'nome': nome,
+                    'cpf_ou_cnpj': cpf_ou_cnpj,
+                    'senha': senha,
+                    'tipo_conta': 'PFI'
+                })
 
-        # Criação de conta PFC (Pessoa Física Conjunta)
-        elif tipo_conta == 'PFC':
-            quantidade_titulares = int(request.form['quantidade_titulares'])
-            titulares = {}
-            for i in range(1, quantidade_titulares + 1):
-                nome = request.form[f'nome_titular{i}']
-                cpf = request.form[f'cpf_cnpj_titular{i}']
-                titulares[cpf] = nome
-            senha = request.form['senha_conjunta']
+            # Criação de conta PFC (Pessoa Física Conjunta)
+            elif tipo_conta == 'PFC':
+                quantidade_titulares = int(request.form['quantidade_titulares'])
+                titulares = {}
+                for i in range(1, quantidade_titulares + 1):
+                    nome = request.form[f'nome_titular{i}']
+                    cpf = request.form[f'cpf_cnpj_titular{i}']
+                    titulares[cpf] = nome
+                senha = request.form['senha_conjunta']
 
-            # Envia os dados para a API de criação de conta do banco
-            response = requests.post(f'{base_url}/criar_conta', json={
-                'titulares': titulares,
-                'senha': senha,
-                'tipo_conta': 'PFC'
-            })
+                # Envia os dados para a API de criação de conta do banco
+                response = requests.post(f'{base_url}/criar_conta', json={
+                    'titulares': titulares,
+                    'senha': senha,
+                    'tipo_conta': 'PFC'
+                })
 
-        # Criação de conta PJ (Pessoa Jurídica)
-        elif tipo_conta == 'PJ':
-            razao_social = request.form['razao_social']
-            cnpj = request.form['cnpj']
-            senha = request.form['senha_juridica']
+            # Criação de conta PJ (Pessoa Jurídica)
+            elif tipo_conta == 'PJ':
+                razao_social = request.form['razao_social']
+                cnpj = request.form['cnpj']
+                senha = request.form['senha_juridica']
 
-            # Envia os dados para a API de criação de conta do banco
-            response = requests.post(f'{base_url}/criar_conta', json={
-                'nome': razao_social,
-                'cpf_ou_cnpj': cnpj,
-                'senha': senha,
-                'tipo_conta': 'PJ'
-            })
+                # Envia os dados para a API de criação de conta do banco
+                response = requests.post(f'{base_url}/criar_conta', json={
+                    'nome': razao_social,
+                    'cpf_ou_cnpj': cnpj,
+                    'senha': senha,
+                    'tipo_conta': 'PJ'
+                })
 
-        # Verifica a resposta da API de criação de conta
-        if response.status_code == 200:
-            data = response.json()
-            flash(f'{data["mensagem"]}, Agência: {data["agencia"]}, Conta: {data["conta"]}', 'success')
-        else:
-            data = response.json()
-            flash(data['erro'], 'error')
+            # Verifica a resposta da API de criação de conta
+            if response.status_code == 200:
+                data = response.json()
+                flash(f'{data["mensagem"]}, Agência: {data["agencia"]}, Conta: {data["conta"]}', 'success')
+            else:
+                data = response.json()
+                flash(data['erro'], 'error')
+
+        except RequestException:
+            # Trata erros de requisição http
+            flash(f'Erro ao conectar com o banco {bank}', 'error')
 
         # Redireciona para a mesma página após o envio do formulário
         return redirect(url_for('criar_conta', bank=bank))
 
     # Renderiza a página de criação de conta para requisições GET
     return render_template('criar_conta.html', bank=bank)
+
 
 
 
@@ -174,8 +185,8 @@ def deposito(bank):
             else:
                 flash(data['erro'], 'error')
         except RequestException:
-            # Trata exceções de requisições HTTP, exibindo uma mensagem de erro
-            flash(data['erro'], 'error')
+            # Trata exceções de requisições HTTP
+            flash(f'Erro ao conectar com o banco {bank}', 'error')
 
         # Redireciona para a mesma página após o envio do formulário
         return redirect(url_for('deposito', bank=bank))
@@ -186,30 +197,38 @@ def deposito(bank):
 
 
 
+
 # Rota para a tela de dashboard
 @app.route('/<bank>/dashboard')
 def dashboard(bank):
     # Obtém a URL base do banco a partir do dicionário bank_urls
     base_url = bank_urls.get(bank)
-    
+       
     # Obtém a agência e a conta da sessão do usuário
     agencia = session.get('agencia')
     conta = session.get('conta')
 
-    # Faz uma requisição GET para a API do banco para obter o saldo da conta
-    response = requests.get(f'{base_url}/saldo', params={
-        'agencia': agencia,
-        'conta': conta})
+    try:
+        # Faz uma requisição GET para a API do banco para obter o saldo da conta
+        response = requests.get(f'{base_url}/saldo', params={
+            'agencia': agencia,
+            'conta': conta
+        })
 
-    # Verifica se a resposta da API foi bem-sucedida
-    if response.status_code == 200:
-        # Obtém o saldo da resposta JSON
-        saldo = response.json().get('saldo', 0)
-    else:
-        # Em caso de erro, define uma mensagem de erro para o saldo
-        saldo = 'Erro ao obter saldo'
+        # Verifica se a resposta da API foi bem-sucedida
+        if response.status_code == 200:
+            # Obtém o saldo da resposta JSON
+            saldo = response.json().get('saldo', 0)
+        else:
+            # Em caso de erro, define uma mensagem de erro para o saldo
+            saldo = 'Erro ao obter saldo'
+    except RequestException:
+        # Trata exceções de requisições HTTP
+        saldo = f'Erro ao conectar com o banco {bank}'
+
     # Renderiza a página de dashboard com o saldo obtido
     return render_template('dashboard.html', bank=bank, saldo=saldo)
+
 
 
 
@@ -221,25 +240,25 @@ def dashboard(bank):
 def transferencia_ted(bank):
     # Obtém a URL base do banco a partir do dicionário bank_urls
     base_url = bank_urls.get(bank)
-    if not base_url:
-        # Caso o banco não seja encontrado, exibe uma mensagem de erro e redireciona para o dashboard
-        flash('Banco não encontrado.', 'error')
-        return redirect(url_for('dashboard', bank=bank))
 
     # Obtém a agência e a conta de origem da sessão do usuário
     agencia_origem = session.get('agencia')
     conta_origem = session.get('conta')
 
-    # Faz uma requisição GET para a API do banco para obter o saldo da conta de origem
-    response = requests.get(f'{base_url}/saldo', params={'agencia': agencia_origem, 'conta': conta_origem})
+    try:
+        # Faz uma requisição GET para a API do banco para obter o saldo da conta de origem
+        response = requests.get(f'{base_url}/saldo', params={'agencia': agencia_origem, 'conta': conta_origem})
 
-    # Verifica se a resposta da API foi bem-sucedida
-    if response.status_code == 200:
-        # Obtém o saldo da resposta JSON
-        saldo = response.json().get('saldo', 0)
-    else:
-        # Em caso de erro, define uma mensagem de erro para o saldo
-        saldo = 'Erro ao obter saldo'
+        # Verifica se a resposta da API foi bem-sucedida
+        if response.status_code == 200:
+            # Obtém o saldo da resposta JSON
+            saldo = response.json().get('saldo', 0)
+        else:
+            # Em caso de erro, define uma mensagem de erro para o saldo
+            saldo = 'Erro ao obter saldo'
+    except RequestException:
+        # Trata exceções de requisições HTTP
+        saldo = f'Erro ao conectar com o banco {bank}'
 
     # Verifica se o método da requisição é POST
     if request.method == 'POST':
@@ -259,23 +278,28 @@ def transferencia_ted(bank):
             'banco_destino': banco_destino
         }
 
-        # Faz uma requisição POST para a API do banco para enviar a transferência TED
-        response = requests.post(f'{base_url}/transferencia/ted/enviar', json=dados)
-        data = response.json()
+        try:
+            # Faz uma requisição POST para a API do banco para enviar a transferência TED
+            response = requests.post(f'{base_url}/transferencia/ted/enviar', json=dados)
+            data = response.json()
 
-        # Verifica se a resposta da API foi bem-sucedida
-        if response.status_code == 200:
-            # Exibe uma mensagem de sucesso
-            flash(f'{data["mensagem"]}', 'success')
-        else:
-            # Exibe uma mensagem de erro
-            flash(f'{data["erro"]}', 'error')
+            # Verifica se a resposta da API foi bem-sucedida
+            if response.status_code == 200:
+                # Exibe uma mensagem de sucesso
+                flash(f'{data["mensagem"]}', 'success')
+            else:
+                # Exibe uma mensagem de erro
+                flash(f'{data["erro"]}', 'error')
+        except RequestException:
+            # Trata exceções de requisições HTTP
+            flash(f'Erro ao conectar com o banco {bank}', 'error')
 
         # Redireciona para a página de transferência TED
         return redirect(url_for('transferencia_ted', bank=bank))
 
     # Renderiza a página de transferência TED com o saldo obtido
     return render_template('transferencia_ted.html', bank=bank, saldo=saldo)
+
 
 
 
@@ -296,6 +320,7 @@ def obter_contas_vinculadas(cpf_ou_cnpj, bank):
 # Rota para tela de transferência pix
 @app.route('/<bank>/transferencia_pix', methods=['GET', 'POST'])
 def transferencia_pix(bank):
+    # Obtém a URL base do banco a partir do dicionário bank_urls
     base_url = bank_urls.get(bank)
 
     # Verifica se o método da requisição é POST
@@ -308,27 +333,36 @@ def transferencia_pix(bank):
             banco, agencia, conta_num, saldo = conta.split(',')
             valor = request.form.get(f'valor_{banco}_{agencia}_{conta_num}')
             if valor and float(valor) > 0:
-                contas_origem.append({'banco': banco,'agencia': agencia,'conta': conta_num,'valor': float(valor)})
+                contas_origem.append({'banco': banco, 'agencia': agencia, 'conta': conta_num, 'valor': float(valor)})
 
         dados = {'chave_pix_destino': chave_pix_destino, 'contas_origem': contas_origem}
 
-        # Faz uma requisição POST para enviar a transferência PIX
-        response = requests.post(f'{base_url}/transferencia/pix/enviar', json=dados)
-        data = response.json()
-        if response.status_code == 200:
-            flash(data['mensagem'], 'success')
-        else:
-            flash(data['erro'], 'error')
+        try:
+            # Faz uma requisição POST para enviar a transferência PIX
+            response = requests.post(f'{base_url}/transferencia/pix/enviar', json=dados)
+            data = response.json()
+            if response.status_code == 200:
+                flash(data['mensagem'], 'success')
+            else:
+                flash(data['erro'], 'error')
+        except RequestException:
+            # Trata exceções de requisições HTTP, exibindo uma mensagem de erro
+            flash(f'Erro ao conectar com os bancos', 'error')
 
         return redirect(url_for('transferencia_pix', bank=bank))
 
     # Obtém o CPF/CNPJ do usuário da sessão
     cpf_ou_cnpj = session.get('cpf_ou_cnpj')
-    
-    # Obtém as contas vinculadas ao CPF/CNPJ
-    contas, erro = obter_contas_vinculadas(cpf_ou_cnpj, bank)
-    if erro:
-        flash('Erro ao obter contas: ' + str(erro), 'error')
+
+    try:
+        # Obtém as contas vinculadas ao CPF/CNPJ
+        contas, erro = obter_contas_vinculadas(cpf_ou_cnpj, bank)
+        if erro:
+            flash('Erro ao obter contas', 'error')
+            return redirect(url_for('dashboard', bank=bank))
+    except RequestException:
+        # Trata exceções de requisições HTTP
+        flash(f'Erro ao conectar com o banco', 'error')
         return redirect(url_for('dashboard', bank=bank))
 
     # Renderiza a página de transferência PIX com as contas vinculadas
@@ -336,33 +370,42 @@ def transferencia_pix(bank):
 
 
 
+
 # Rota para a tela de saque
 @app.route('/<bank>/sacar', methods=['GET', 'POST'])
 def sacar(bank):
+    # Obtém a URL base do banco a partir do dicionário bank_urls
     base_url = bank_urls.get(bank)
 
     # Obtém a agência e conta da sessão do usuário
     agencia = session.get('agencia')
     conta = session.get('conta')
 
-    # Obtém o saldo da conta do usuário
-    response = requests.get(f'{base_url}/saldo', params={'agencia': agencia, 'conta': conta})
-
-    if response.status_code == 200:
-        saldo = response.json().get('saldo', 0)
-    else:
-        saldo = 'Erro ao obter saldo'
+    try:
+        # Obtém o saldo da conta do usuário
+        response = requests.get(f'{base_url}/saldo', params={'agencia': agencia, 'conta': conta})
+        if response.status_code == 200:
+            saldo = response.json().get('saldo', 0)
+        else:
+            saldo = 'Erro ao obter saldo'
+    except RequestException:
+        # Trata exceções de requisições HTTP
+        saldo = 'Erro ao conectar com o banco'
 
     if request.method == 'POST':
         valor = float(request.form['valor'])
 
-        # Faz uma requisição POST para realizar o saque
-        response = requests.post(f'{base_url}/sacar', json={'agencia': agencia, 'conta': conta, 'valor': valor})
-        data = response.json()
-        if response.status_code == 200:
-            flash(data['mensagem'], 'success')
-        else:
-            flash(data['erro'], 'error')
+        try:
+            # Faz uma requisição POST para realizar o saque
+            response = requests.post(f'{base_url}/sacar', json={'agencia': agencia, 'conta': conta, 'valor': valor})
+            data = response.json()
+            if response.status_code == 200:
+                flash(data['mensagem'], 'success')
+            else:
+                flash(data['erro'], 'error')
+        except RequestException:
+            # Trata exceções de requisições HTTP
+            flash(f'Erro ao conectar com o banco {bank}', 'error')
 
         return redirect(url_for('sacar', bank=bank))
 
@@ -370,32 +413,37 @@ def sacar(bank):
     return render_template('sacar.html', bank=bank, saldo=saldo)
 
 
-# Rota para tela de vizualização das chave pix
+
+# Rota para tela de visualização das chaves PIX
 @app.route('/<bank>/minhas_chaves_pix', methods=['GET'])
 def minhas_chaves_pix(bank):
-    # Obtém a URL base do banco
+    # Obtém a URL base do banco a partir do dicionário bank_urls
     base_url = bank_urls.get(bank)
+
     # Obtém a agência e conta da sessão do usuário
     agencia = session.get('agencia')
     conta = session.get('conta')
 
-    # Faz uma requisição GET para visualizar as chaves PIX associadas à conta
-    response = requests.get(f'{base_url}/pix/visualizar', params={'agencia': agencia, 'conta': conta})
-    
-    # Se a requisição for bem-sucedida, obtém as chaves PIX
-    if response.status_code == 200:
-        chaves_pix = response.json().get('chaves_pix', {})
-    else:
-        # Caso contrário, exibe uma mensagem de erro e define chaves_pix como um dicionário vazio
-        flash('Erro ao visualizar chaves PIX.', 'error')
+    try:
+        # Faz uma requisição GET para visualizar as chaves PIX associadas à conta
+        response = requests.get(f'{base_url}/pix/visualizar', params={'agencia': agencia, 'conta': conta})
+        if response.status_code == 200:
+            chaves_pix = response.json().get('chaves_pix', {})
+        else:
+            chaves_pix = {}
+            flash('Erro ao visualizar chaves PIX.', 'error')
+    except RequestException:
+        # Trata exceções de requisições HTTP
         chaves_pix = {}
+        flash(f'Erro ao conectar com o banco {bank}', 'error')
 
     # Renderiza a página de visualização de chaves PIX com as chaves obtidas
     return render_template('minhas_chaves_pix.html', bank=bank, chaves=chaves_pix)
 
 
 
-# Rota para cadastrar chave pix na tela de minhas chaves pix
+
+# Rota para cadastrar chave PIX na tela de minhas chaves PIX
 @app.route('/<bank>/cadastrar_chave_pix', methods=['POST'])
 def cadastrar_chave_pix(bank):
     # Obtém a URL base do banco a partir do dicionário bank_urls
@@ -404,30 +452,36 @@ def cadastrar_chave_pix(bank):
     # Obtém a agência e a conta da sessão do usuário
     agencia = session.get('agencia')
     conta = session.get('conta')
+
     # Obtém o tipo de chave e o valor da chave do formulário de solicitação
     tipo_chave = request.form['tipo_chave']
     chave_pix = request.form['valor_chave']
 
     # Dados a serem enviados na requisição POST
-    dados = {'agencia': agencia,'conta': conta,'chave_pix': chave_pix,'tipo_chave': tipo_chave}
+    dados = {'agencia': agencia, 'conta': conta, 'chave_pix': chave_pix, 'tipo_chave': tipo_chave}
 
-    # Faz uma requisição POST para cadastrar a chave PIX
-    response = requests.post(f'{base_url}/pix/cadastrar', json=dados)
-    data = response.json()
+    try:
+        # Faz uma requisição POST para cadastrar a chave PIX
+        response = requests.post(f'{base_url}/pix/cadastrar', json=dados)
+        data = response.json()
 
-    # Se a requisição for bem-sucedida, exibe uma mensagem de sucesso
-    if response.status_code == 200:
-        flash(data['mensagem'], 'success')
-    else:
-        # Caso contrário, exibe uma mensagem de erro
-        flash(data['mensagem'], 'error')
+        # Se a requisição for bem-sucedida, exibe uma mensagem de sucesso
+        if response.status_code == 200:
+            flash(data['mensagem'], 'success')
+        else:
+            # Caso contrário, exibe uma mensagem de erro
+            flash(data['mensagem'], 'error')
+    except RequestException:
+        # Trata exceções de requisições HTTP
+        flash(f'Erro ao conectar com o banco {bank}', 'error')
 
     # Redireciona o usuário de volta para a página de visualização de chaves PIX
     return redirect(url_for('minhas_chaves_pix', bank=bank))
 
 
 
-# Rota para apagar uma chave pix na tela de vizualização de chave pix
+
+# Rota para apagar uma chave PIX na tela de visualização de chaves PIX
 @app.route('/<bank>/apagar_chave_pix', methods=['POST'])
 def apagar_chave_pix(bank):
     # Obtém a URL base do banco a partir do dicionário bank_urls
@@ -447,17 +501,23 @@ def apagar_chave_pix(bank):
         'tipo_chave': tipo_chave
     }
 
-    # Faz uma requisição POST para apagar a chave PIX
-    response = requests.post(f'{base_url}/pix/apagar', json=dados)
-    data = response.json()
-    # Verifica se a requisição foi bem-sucedida e exibe uma mensagem adequada
-    if response.status_code == 200:
-        flash(data['mensagem'], 'success')
-    else:
-        flash('Erro ao apagar chave PIX.', 'error')
+    try:
+        # Faz uma requisição POST para apagar a chave PIX
+        response = requests.post(f'{base_url}/pix/apagar', json=dados)
+        data = response.json()
+        
+        # Verifica se a requisição foi bem-sucedida e exibe uma mensagem adequada
+        if response.status_code == 200:
+            flash(data['mensagem'], 'success')
+        else:
+            flash(data['mensagem'], 'error')
+    except RequestException:
+        # Trata exceções de requisições HTTP
+        flash(f'Erro ao conectar com o banco {bank}', 'error')
 
     # Redireciona o usuário de volta para a página de visualização de chaves PIX
     return redirect(url_for('minhas_chaves_pix', bank=bank))
+
 
 
 

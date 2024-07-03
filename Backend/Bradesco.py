@@ -14,7 +14,7 @@ from tabulate import tabulate
 
 ##### Servidor do Banco Bradesco #######
 
-ip_table_router ='172.31.160.1' #os.getenv('IP_ROUTER')
+ip_table_router = os.getenv('IP_ROUTER')
 url_table_router = 'http://' + ip_table_router + ':4326'
 
 # Configuração do banco de dados

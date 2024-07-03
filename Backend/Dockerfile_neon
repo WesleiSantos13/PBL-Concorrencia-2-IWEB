@@ -8,7 +8,7 @@ WORKDIR /app
 COPY Neon.py .
 
 # Instalar as dependências
-RUN pip install --no-cache-dir flask SQLAlchemy requests tabulate
+RUN pip install --no-cache-dir flask flask_sqlalchemy requests tabulate
 
 # Expor a porta em que o banco vai rodar
 EXPOSE 9636
