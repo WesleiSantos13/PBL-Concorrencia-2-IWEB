@@ -22,9 +22,9 @@ Instalar a biblioteca requests, que é responsável pelas solicitações via htt
 
     pip install requests
 
-Instalar a biblioteca responsável pelo banco de dados (SQLAlchemy), que armazena os dados de conta e titulares (Apenas os servidores dos bancos utilizam o SQLAlchemy). Instale usando o prompt de comando com:  
+Instalar a biblioteca responsável pelo banco de dados (flask_sqlalchemy), que armazena os dados de conta e titulares (Apenas os servidores dos bancos utilizam o flask_sqlalchemy). Instale usando o prompt de comando com:  
 
-    pip install SQLAlchemy
+    pip install flask_sqlalchemy
     
 Por fim, instalar uma biblioteca adicional para exibir continualmente as informações de conta do banco, que é a biblioteca tabulate (Isso foi implementado pensando no docker, já que não tem como usar a extensão SQL Viewer na execução do container). Instale usando o prompt de comando com:  
 
@@ -127,3 +127,5 @@ Para executar em qualquer máquina os containers:
     docker run --network=host -it -e IP_ROUTER=192.168.65.3  wesleisantoss/neon
     docker run --network=host -it -e IP_ROUTER=192.168.65.3  wesleisantoss/picpay
     docker run -p 9999:9999 -it -e IP_bradesco=192.168.65.3 -e IP_neon=192.168.65.3 -e IP_picpay=192.168.65.3 wesleisantoss/app
+
+Para o correto funcionamento do sistema, execute a tabela de roteamento (wesleisantoss/table_router), depois coloque o ip onde está executando a tabela de roteamento nos bancos (wesleisantoss/bradesco, wesleisantoss/neon, wesleisantoss/picpay) em 'IP_ROUTER' e os execute. Depois coloque os ips de onde cada banco está executando na aplicação (wesleisantoss/app) usando 'IP_bradesco', 'IP_neon' e 'IP_picpay' e execute a aplicação.
