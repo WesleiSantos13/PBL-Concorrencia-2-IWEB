@@ -128,6 +128,10 @@ Para executar em qualquer máquina os containers:
     docker run --network=host -it -e IP_ROUTER=192.168.65.3  wesleisantoss/picpay
     docker run -p 9999:9999 -it -e IP_bradesco=192.168.65.3 -e IP_neon=192.168.65.3 -e IP_picpay=192.168.65.3 wesleisantoss/app
 
-Para o correto funcionamento do sistema, execute a tabela de roteamento (wesleisantoss/table_router), depois coloque o ip onde está executando a tabela de roteamento nos bancos (wesleisantoss/bradesco, wesleisantoss/neon, wesleisantoss/picpay) em 'IP_ROUTER' e os execute. Depois coloque os ips de onde cada banco está executando na aplicação (wesleisantoss/app) usando 'IP_bradesco', 'IP_neon' e 'IP_picpay' e execute a aplicação.
+Para o correto funcionamento do sistema, execute a tabela de roteamento (wesleisantoss/table_router), depois coloque o ip onde está executando a tabela de roteamento nos bancos (wesleisantoss/bradesco, wesleisantoss/neon, wesleisantoss/picpay) em 'IP_ROUTER' e os execute. Depois coloque os ips de onde cada banco está executando na aplicação (wesleisantoss/app) usando 'IP_bradesco', 'IP_neon' e 'IP_picpay' e execute a aplicação.  
+* A rota de acesso da aplicação será:
+    http://localhost:9999/
+
+
 
 __DIAGRAMA DO SISTEMA__
