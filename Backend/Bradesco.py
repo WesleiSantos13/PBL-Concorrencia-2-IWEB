@@ -255,6 +255,10 @@ def sacar():
     conta = dados.get('conta')
     valor = dados.get('valor')
     
+    # Se o valor a ser sacado estiver zerado
+    if valor == 0:
+        return jsonify({'erro': 'Você não pode sacar 0 reais'}), 423
+
     lock_key_conta = f"{agencia}-{conta}"
     
     # Tenta adquirir o bloqueio para a conta

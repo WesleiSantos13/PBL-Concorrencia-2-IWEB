@@ -5,7 +5,7 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # Copiar o restante do código da aplicação para o diretório de trabalho
-COPY tabela_roteamento.py .
+COPY table_router.py .
 
 # Instalar as dependências
 RUN pip install --no-cache-dir flask
@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir flask
 EXPOSE 4326
 
 # Comando para rodar a aplicação Flask
-CMD ["python", "tabela_roteamento.py"]
+CMD ["python", "table_router.py"]
