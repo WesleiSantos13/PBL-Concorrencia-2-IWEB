@@ -134,5 +134,6 @@ Para o correto funcionamento do sistema, execute a tabela de roteamento (wesleis
 
 
 
-__DIAGRAMA DO SISTEMA__  
+__DIAGRAMA DO SISTEMA__
+
    ![Diagrama de Comunicação](./Diagrama%20do%20sistema.png)
