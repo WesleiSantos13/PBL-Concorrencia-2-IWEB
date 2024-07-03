@@ -40,7 +40,7 @@ A tabela de roteamento é responsável por armazenar as rotas específicas dos b
 Iniciar a tabela de roteamento: Execute o arquivo table_router.py utilizando Python. Este servidor ficará ativo aguardando o registro das rotas pelos bancos. Posteriormente, outros bancos poderão realizar operações distribuídas consultando esta tabela. 
 
 
-__Bancos(Bradesco.py, Picpay.py e Neon.py)__
+__Bancos (Bradesco.py, Picpay.py e Neon.py)__
 
 Os bancos são responsáveis por disponibilizar serviços à aplicação, como movimentação de saldo através de transferências, depósitos e saques. Além disso, cada banco deve registrar suas rotas na tabela de roteamento e consultar essa tabela para realizar operações distribuídas de forma eficiente.  
 
@@ -110,5 +110,20 @@ Após o acesso, é necessário:
        
 __Execução dos containers:__
 
+* Comandos para executar o sistema com o Docker:
 
+Para carregar as imagens do DockerHub:
 
+    docker pull wesleisantoss/table_router:latest
+    docker pull wesleisantoss/bradesco:latest
+    docker pull wesleisantoss/neon:latest
+    docker pull wesleisantoss/picpay:latest
+    docker pull wesleisantoss/app:latest
+
+Para executar em qualquer máquina os containers:
+
+    docker run --network=host -it wesleisantoss/table_router
+    docker run --network=host -it -e IP_ROUTER=192.168.65.3  wesleisantoss/bradesco
+    docker run --network=host -it -e IP_ROUTER=192.168.65.3  wesleisantoss/neon
+    docker run --network=host -it -e IP_ROUTER=192.168.65.3  wesleisantoss/picpay
+    docker run -p 9999:9999 -it -e IP_bradesco=192.168.65.3 -e IP_neon=192.168.65.3 -e IP_picpay=192.168.65.3 wesleisantoss/app
