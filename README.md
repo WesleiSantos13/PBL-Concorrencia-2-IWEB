@@ -238,6 +238,9 @@ __Rotas do servidor:__
   Essa rota permite enviar valores para uma conta específica de qualquer banco.  
   Recepção dos Dados: Recebe dados JSON do cliente contendo a agência e conta de origem, a agência e conta de destino e o valor a ser transferido.
 
-* Rota /transferencia/pix/enviar
-  Essa rota permite que o cliente envie valores de diferentes contas vinculadas ao seu CPF para outra conta por meio da chave PIX.
+* Rota /transferencia/pix/enviar  
+  Essa rota permite que o cliente envie valores de diferentes contas vinculadas ao seu CPF para outra conta por meio da chave PIX.  (N para 1)
   Recepção dos Dados: Recebe dados JSON do cliente contendo as contas de origem com suas informações de agência, conta, banco e valor a ser transferido de cada banco.
+
+* Rota /transferencia/receber
+ Essa rota permite que o ban
