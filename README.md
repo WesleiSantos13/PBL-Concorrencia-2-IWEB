@@ -167,55 +167,65 @@ _Picpay.py:__
   - Nos bancos, são usadas quatro tabelas no banco de dados flask_sqlalchemy. Aqui estão as tabelas e suas funções:
 
 1. Tabela Titular:    
-Descrição: Representa os titulares das contas no banco.
+Descrição: Representa os titulares das contas no banco.  
 Colunas:  
-  id: Identificador único do titular (chave primária).
-  nome: Nome do titular.
-  cpf_ou_cnpj: Documento único do titular, seja CPF ou CNPJ (único e não nulo).
+  id: Identificador único do titular (chave primária).  
+  nome: Nome do titular.  
+  cpf_ou_cnpj: Documento único do titular, seja CPF ou CNPJ (único e não nulo).  
   
   
 2. Tabela conta_titular:    
-Descrição: Tabela de associação para relacionar titulares e contas. É uma tabela de junção muitos-para-muitos.
+Descrição: Tabela de associação para relacionar titulares e contas. É uma tabela de junção muitos-para-muitos.  
 Colunas:  
-  conta_id: Identificador da conta (chave estrangeira).
-  titular_id: Identificador do titular (chave estrangeira).
+  conta_id: Identificador da conta (chave estrangeira).  
+  titular_id: Identificador do titular (chave estrangeira).  
 
 3. Tabela Conta:  
-Descrição: Representa as contas bancárias.
-Colunas:
-  id: Identificador único da conta (chave primária).
-  agencia: Agência bancária da conta.
-  conta: Número da conta.
-  senha: Senha da conta.
-  saldo: Saldo da conta (padrão é 0.0).
-  chave_pix_email: Chave PIX baseada em e-mail (único).
-  chave_pix_aleatoria: Chave PIX aleatória (único).
-  numero_celular: Número de celular associado à conta (único).
-  tipo_conta: Tipo de conta (por exemplo, PFI, PFC e PJ).
-  titulares: Relacionamento muitos-para-muitos com a tabela Titular usando a tabela conta_titular.
+Descrição: Representa as contas bancárias.  
+Colunas:  
+  id: Identificador único da conta (chave primária).  
+  agencia: Agência bancária da conta.  
+  conta: Número da conta.  
+  senha: Senha da conta.  
+  saldo: Saldo da conta (padrão é 0.0).  
+  chave_pix_email: Chave PIX baseada em e-mail (único).  
+  chave_pix_aleatoria: Chave PIX aleatória (único).  
+  numero_celular: Número de celular associado à conta (único).  
+  tipo_conta: Tipo de conta (por exemplo, PFI, PFC e PJ).  
+  titulares: Relacionamento muitos-para-muitos com a tabela Titular usando a tabela conta_titular.  
 
    
 4. Tabela Lock:  
-Descrição: Representa os bloqueios em recursos específicos para gerenciar concorrência(ex: Bloquear um conta através da agencia e conta ou através da chave pix).
+Descrição: Representa os bloqueios em recursos específicos para gerenciar concorrência(ex: Bloquear um conta através da agencia e conta ou através da chave pix).  
 Colunas:  
-  id: Identificador único do bloqueio (chave primária).
-  resource: Recurso que está sendo bloqueado (único e não nulo).
-  locked: Estado do bloqueio (verdadeiro se bloqueado, falso caso contrário).
-  timestamp: Data e hora em que o bloqueio foi criado (definido automaticamente).
+  id: Identificador único do bloqueio (chave primária).  
+  resource: Recurso que está sendo bloqueado (único e não nulo).  
+  locked: Estado do bloqueio (verdadeiro se bloqueado, falso caso contrário).  
+  timestamp: Data e hora em que o bloqueio foi criado (definido automaticamente).  
 
 __Funções de Bloqueio:__  
 * Função acquire_lock: Tenta adquirir um bloqueio exclusivo em um recurso específico. Se o recurso já estiver bloqueado, a função aguardará até que o bloqueio possa ser adquirido ou o tempo limite seja atingido.  
 * Função release_lock: Libera um bloqueio em um recurso específico, permitindo que outros processos possam adquirir o bloqueio no futuro.
 
-__Função obter_tabela_roteamento:__  
-Esta função faz uma solicitação HTTP GET para obter as rotas dos bancos a partir do servidor de roteamento.
+__Função obter_tabela_roteamento:__ Esta função faz uma solicitação HTTP GET para obter as rotas dos bancos a partir do servidor de roteamento.
 
-__Função atualizar_tabela_roteamento__
-Esta função registra as informações de um banco específico no servidor de roteamento.
+__Função atualizar_tabela_roteamento:__ Esta função registra as informações de um banco específico no servidor de roteamento.
 
 __Rotas do servidor:__  
+* Rota /login  
+  Esta rota permite que um usuário faça login em sua conta bancária.  
+  Recepção dos Dados: Recebe dados JSON do cliente contendo agencia, conta, senha e cpf_ou_cnpj.  
 
-* Rota /login
-  Esta rota permite que um usuário faça login em sua conta bancária.
-  Recepção dos Dados: Recebe dados JSON do cliente contendo agencia, conta, senha e cpf_ou_cnpj.
+* Rota /criar_conta  
+  Esta rota permite que o usuário crie uma conta do tipo que escolher (PFI, PFC, PJ)
+  Recepção dos Dados: Recebe dados JSON do cliente contendo senha e tipo_conta.
+     - Se a conta for conjunta ela recebe um conjunto de titulares com nome, CPFs.
+     - Se a conta for individual ou jurídica, ele recebe o CPF e nome do titular. (Para conta jurídica o nome do titular irá representar a razão social da empresa ou organização).
 
+* Rota /depositar  
+  Essa rota permite que o usuário faça depositos em quanquer conta em qualquer banco.  
+  Recepção dos Dados: Recebe dados JSON do cliente contendo a agência de destino, conta de destino, o banco ao qual a conta pertence (banco de destino) e o valor a ser transferido.
+
+* Rota /sacar
+  Essa rota permite que o usuário faça saques em sua conta logada.
+  Recepção dos Dados: Recebe dados JSON do cliente contendo a agência, conta e valor.
