@@ -223,9 +223,21 @@ __Rotas do servidor:__
      - Se a conta for individual ou jurídica, ele recebe o CPF e nome do titular. (Para conta jurídica o nome do titular irá representar a razão social da empresa ou organização).
 
 * Rota /depositar  
-  Essa rota permite que o usuário faça depositos em quanquer conta em qualquer banco.  
-  Recepção dos Dados: Recebe dados JSON do cliente contendo a agência de destino, conta de destino, o banco ao qual a conta pertence (banco de destino) e o valor a ser transferido.
+  Essa rota permite que o usuário faça depositos em qualquer conta, em qualquer banco.  
+  Recepção dos Dados: Recebe dados JSON do cliente contendo a agência de destino, conta de destino, o banco ao qual a conta pertence (banco de destino) e o valor a ser transferido.  
 
-* Rota /sacar
-  Essa rota permite que o usuário faça saques em sua conta logada.
-  Recepção dos Dados: Recebe dados JSON do cliente contendo a agência, conta e valor.
+* Rota /sacar  
+  Essa rota permite que o usuário faça saques em sua conta logada.  
+  Recepção dos Dados: Recebe dados JSON do cliente contendo a agência, conta e valor.  
+
+* Rota /saldo  
+  Essa rota permite vizualizar o saldo da conta logada.  
+  Recepção dos Dados: Recebe dados JSON do cliente contendo a agência e conta.  
+
+* Rota /transferencia/ted/enviar  
+  Essa rota permite enviar valores para uma conta específica de qualquer banco.  
+  Recepção dos Dados: Recebe dados JSON do cliente contendo a agência e conta de origem, a agência e conta de destino e o valor a ser transferido.
+
+* Rota /transferencia/pix/enviar
+  Essa rota permite que o cliente envie valores de diferentes contas vinculadas ao seu CPF para outra conta por meio da chave PIX.
+  Recepção dos Dados: Recebe dados JSON do cliente contendo as contas de origem com suas informações de agência, conta, banco e valor a ser transferido de cada banco.
