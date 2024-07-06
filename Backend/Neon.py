@@ -105,13 +105,12 @@ URL_SERVER = f'http://{IP}:{PORT}'
 # Código do banco 
 BANCO_ID = '536'
 
-#'+os.getenv('IP_picpay')+'
+
 # URL de todos os bancos
 bank_urls = {
     '237': 'http://'+os.getenv('IP_bradesco')+'9635',
     '380': 'http://'+os.getenv('IP_picpay')+':9637'
 }
-
 
 
 # Gera uma agência única
