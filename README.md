@@ -57,6 +57,7 @@ Exemplo:
     Restarting with stat
     Debugger is active!
     Debugger PIN: 746-199-761
+    
 Dessa forma, basta acessar a rota no navegador (http://172.31.160.1:9999) para que o cliente possa utilizar a aplicação e interagir com os serviços bancários disponibilizados.  
 
 Após o acesso, é necessário:
@@ -110,7 +111,6 @@ __Execução dos containers:__
 
 Para carregar as imagens do DockerHub:
 
-    docker pull wesleisantoss/table_router:latest
     docker pull wesleisantoss/bradesco:latest
     docker pull wesleisantoss/neon:latest
     docker pull wesleisantoss/picpay:latest
@@ -118,7 +118,6 @@ Para carregar as imagens do DockerHub:
 
 Para executar em qualquer máquina os containers:
 
-    docker run --network=host -it wesleisantoss/table_router
     docker run --network=host -it -e IP_ROUTER=192.168.65.3  wesleisantoss/bradesco
     docker run --network=host -it -e IP_ROUTER=192.168.65.3  wesleisantoss/neon
     docker run --network=host -it -e IP_ROUTER=192.168.65.3  wesleisantoss/picpay
