@@ -18,7 +18,7 @@ bank_urls = {
     'picpay': 'http://'+os.getenv('IP_picpay')+':9637'
 }
 
-# Rota para a tela inial (index)
+# Rota para a tela inicial (index)
 @app.route('/')
 def index():
     return render_template('index.html')
