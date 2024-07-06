@@ -111,8 +111,8 @@ BANCO_ID = '380'
 
 # URL de todos os bancos
 bank_urls = {
-    '237': 'http://'+os.getenv('IP_bradesco')+'9635',
-    '536': 'http://'+os.getenv('IP_neon')+'9636'
+    '237': 'http://'+os.getenv('IP_bradesco')+':9635',
+    '536': 'http://'+os.getenv('IP_neon')+':9636'
 }
 
 

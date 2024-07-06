@@ -108,7 +108,7 @@ BANCO_ID = '536'
 
 # URL de todos os bancos
 bank_urls = {
-    '237': 'http://'+os.getenv('IP_bradesco')+'9635',
+    '237': 'http://'+os.getenv('IP_bradesco')+':9635',
     '380': 'http://'+os.getenv('IP_picpay')+':9637'
 }
 

@@ -110,7 +110,7 @@ BANCO_ID = '237'
 
 # URL de todos os bancos
 bank_urls = {
-    '536': 'http://'+os.getenv('IP_neon')+'9636',
+    '536': 'http://'+os.getenv('IP_neon')+':9636',
     '380': 'http://'+os.getenv('IP_picpay')+':9637'
 }
 
