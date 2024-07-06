@@ -11,11 +11,17 @@ app = Flask(__name__)
 
 app.secret_key = 'chave_secreta'  
 
-# Rotas dos bancos
-bank_urls = {
+
+'''bank_urls = {
     'bradesco': 'http://'+os.getenv('IP_bradesco')+':9635',
     'neon': 'http://'+os.getenv('IP_neon')+':9636',
     'picpay': 'http://'+os.getenv('IP_picpay')+':9637'
+}'''
+# Rotas dos bancos
+bank_urls = {
+    'bradesco': 'http://172.31.160.1:9635',
+    'neon': 'http://172.31.160.1:9636',
+    'picpay': 'http://172.31.160.1:9637'
 }
 
 # Rota para a tela inial (index)
