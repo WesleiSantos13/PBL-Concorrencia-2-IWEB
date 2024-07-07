@@ -362,7 +362,7 @@ C, para o banco D?__
 - Para ilustrar a eficácia dos locks implementados, considere o cenário onde uma conta está recebendo duas transferências simultâneas: uma de outra conta no mesmo banco e outra de um banco externo. Quando a conta recebe a primeira transferência, um lock é adquirido temporariamente para garantir que apenas uma transação modifique seu saldo por vez. Enquanto isso, a segunda transferência, vinda de um banco externo, tenta adquirir o mesmo lock.
 
 -  A tentativa de adquirir o lock é limitada a um timeout de 10 segundos. Se a conta consegue liberar o lock dentro desse período, a segunda transação poderá ser realizada. Caso contrário, se o lock não é liberado a tempo, a segunda transação é cancelada, garantindo que a integridade dos dados seja preservada e que apenas uma operação seja processada por vez para a conta em questão.
-- As rotas que usam o sistema de locks são: a rota de saque, deposito, transferencia ted e pix, a rota de receber transferensia e descontar valores.
+- As rotas que usam o sistema de locks são: a rota de saque, deposito, transferencia ted e pix, a rota de receber transferência e descontar valores.
 
 * Algoritmo de transferência PIX:  
   - O algoritmo da transferência PIX consegue descontar o valor de cada conta de origem e transferir o total para a conta de destino. Em caso de qualquer erro durante o processo, os saldos descontados são revertidos para garantir a consistência dos dados.
@@ -372,8 +372,10 @@ C, para o banco D?__
 - Sim, quando o banco perde a conexão, a aplicação perde o contato com o servidor. No entanto, isso não resulta em erros graves na aplicação devido aos tratamentos de erro implementados. A aplicação continua tentando acessar as funcionalidades do banco, mas não consegue até que a conexão seja restabelecida. Quando a conexão volta, o sistema retorna ao funcionamento normal, permitindo que as operações sejam retomadas sem perda de dados ou inconsistências significativas.
 
   
-8. __Pelo menos uma transação concorrente é realizada ? Como foi tratado o caso em que mais de duas transações ocorrem no mesmo banco de forma concorrente? O saldo fica correto? Os clientes conseguem realizar as transações?__
-- Sim, o tratamento da concorrência ocorre da mesma maneira antes citada, o lock bloqueia a conta especifica e durante 10 segundos as outra tentam adquirir esse lock caso o tempo se esgote só uma realizada, mas se liberar a tempo as que primeiro tentara
+8. __Pelo menos uma transação concorrente é realizada ? Como foi tratado o caso em que mais de duas transações ocorrem no mesmo banco de forma concorrente? O saldo fica correto? Os clientes conseguem realizar as transações?__  
+- Sim, o tratamento da concorrência é feito utilizando locks, conforme mencionado anteriormente. Quando uma transação é iniciada, um lock é adquirido para a conta específica, impedindo outras operações na mesma conta. As demais transações tentam adquirir o lock durante um período de até 10 segundos. Se o tempo se esgotar, apenas a transação que conseguiu obter o lock primeiro é realizada. No entanto, se o lock for liberado dentro do prazo, as transações subsequentes que conseguirem adquirir o bloqueio também são realizadas. Dessa forma, o saldo das contas permanece correto, e os clientes conseguem realizar suas transações de maneira consistente.
+
+
 __Testes:__
 
 
