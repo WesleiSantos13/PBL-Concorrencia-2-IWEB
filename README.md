@@ -327,14 +327,15 @@ C, para o banco D?__
     - O bloqueio é implementado como uma entrada na tabela Lock com a coluna locked que indica se o recurso está atualmente bloqueado.  
     - A função tenta repetidamente adquirir o bloqueio até um determinado tempo limite (timeout), esperando um curto período entre as tentativas (time.sleep(0.1)).
       
-- Liberação de Bloqueio:
-  - Após a conclusão da operação, seja ela bem-sucedida ou não, o sistema libera o bloqueio utilizando a função release_lock(resource), que marca o recurso como desbloqueado (locked = False).
+  - Liberação de Bloqueio:
+    - Após a conclusão da operação, seja ela bem-sucedida ou não, o sistema libera o bloqueio utilizando a função release_lock(resource), que marca o recurso como desbloqueado (locked = False).
 
-- Operações Críticas:
-  - As operações críticas, como depósitos, saques e transferências, são envolvidas por tentativas de aquisição e liberação de bloqueio.  
-  - Se a aquisição do bloqueio falhar (por exemplo, porque o recurso está sendo utilizado por outra transação), a operação retorna uma resposta de erro apropriada (por exemplo, 423 'A conta de destino está sendo usada em outra operação').  
- - Durante a aquisição do bloqueio (with_for_update(nowait=True)), o sistema utiliza operações no banco de dados para garantir que a verificação e a atualização do estado do bloqueio sejam atômicas.  
- - Se uma operação falhar, o sistema realiza um rollback para garantir que o estado do banco de dados permaneça consistente.  
+  - Operações Críticas:
+    - As operações críticas, como depósitos, saques e transferências, são envolvidas por tentativas de aquisição e liberação de bloqueio.  
+    - Se a aquisição do bloqueio falhar (por exemplo, porque o recurso está sendo utilizado por outra transação), a operação retorna uma resposta de erro apropriada (por exemplo, 423 'A conta de destino está sendo usada em outra operação').
+       
+  - Durante a aquisição do bloqueio (with_for_update(nowait=True)), o sistema utiliza operações no banco de dados para garantir que a verificação e a atualização do estado do bloqueio sejam atômicas.  
+  - Se uma operação falhar, o sistema realiza um rollback para garantir que o estado do banco de dados permaneça consistente.  
 
 
 
