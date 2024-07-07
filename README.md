@@ -347,11 +347,11 @@ C, para o banco D?__
   - Então, cada banco é responsável por gerenciar seus próprios locks, garantindo que a concorrência seja controlada localmente. Isso significa que a rota /transferencia/receber em cada banco atua de forma distribuída, bloqueando apenas as contas relevantes para as transações que chegam.
 
 * Algoritmo de transferência PIX:  
-- Na transferência PIX, o sistema utiliza um algoritmo inspirado no Two-Phase Commit. A primeira fase é a de preparação, onde todas as contas de origem são verificadas para garantir que possuem saldo suficiente para a transferência. Cada conta é identificada pelo CPF ou CNPJ, e são adquiridos o código do banco, número de agência, número de conta e saldo.
+  - Na transferência PIX, o sistema utiliza um algoritmo inspirado no Two-Phase Commit. A primeira fase é a de preparação, onde todas as contas de origem são verificadas para garantir que possuem saldo suficiente para a transferência. Cada conta é identificada pelo CPF ou CNPJ, e são adquiridos o código do banco, número de agência, número de conta e saldo.
 
-- Na segunda fase, os valores são descontados das contas de origem, similar à fase de commit do Two-Phase Commit. Se houver qualquer erro durante o desconto de alguma conta, o processo entra em uma fase de abortar, revertendo os saldos já descontados e cancelando a transferência.
+  - Na segunda fase, os valores são descontados das contas de origem, similar à fase de commit do Two-Phase Commit. Se houver qualquer erro durante o desconto de alguma conta, o processo entra em uma fase de abortar, revertendo os saldos já descontados e cancelando a transferência.
 
-- Caso a fase de desconto ocorra com sucesso, a próxima etapa é direcionar o valor total das contas de origem para a conta de destino através da chave PIX. Se ocorrer algum erro na transferência, os valores das contas de origem são revertidos, garantindo a integridade das transações.
+  - Caso a fase de desconto ocorra com sucesso, a próxima etapa é direcionar o valor total das contas de origem para a conta de destino através da chave PIX. Se ocorrer algum erro na transferência, os valores das contas de origem são revertidos, garantindo a integridade das transações.
 
     
 
