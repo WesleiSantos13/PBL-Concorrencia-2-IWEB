@@ -1,4 +1,4 @@
-# PBL-Concorrencia-2-IWEB-
+# PBL-Concorrencia-2 - Operações Bancárias Distribuídas
 
 __Autor - Weslei Silva Santos__
 
