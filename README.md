@@ -295,6 +295,20 @@ __Frontend:__
 
 
 
-# Barema:
-  
+# Especificações conforme o Barema:
+1. _Permite gerenciar contas? O sistema realiza o gerenciamento de contas? Criar e realizar transações?_
 
+2. _Permite selecionar e realizar transferência entre diferentes contas? É possível transacionar entre diferentes bancos? Por exemplo, enviar do banco A, B e
+C, para o banco D?_
+
+3. _Comunicação entre servidores Os bancos estão se comunicando com o protocolo adequado?_
+
+4. _Sincronização em um único servidor Como tratou a concorrência em um único servidor, quando chegam mais de um pedido de transação a um único servidor?_
+
+5. _Algoritmo da concorrencia distribuída está teoricamente bem empregado? Qual algoritmo foi utilizado? Está correto para a solução?_  
+
+6. _Algoritmo está tratrando o problema na prática? A implementação do algoritmo está funcionamento corretamente?_
+
+7. _Tratamento da confiabilidade Quando um dos bancos perde a conexão, o sistema continua funcionando corretamente? E quando o banco retorna à conexão?_
+
+8. _Pelo menos uma transação concorrente é realizada ?Como foi tratado o caso em que mais de duas transações ocorrem no mesmo banco de forma concorrente? O saldo fica correto? Os clientes conseguem realizar as transações?_
