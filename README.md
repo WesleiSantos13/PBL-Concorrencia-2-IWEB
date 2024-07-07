@@ -193,7 +193,7 @@ Colunas:
 
    
 4. Tabela Lock:  
-Descrição: Representa os bloqueios em recursos específicos para gerenciar concorrência (ex: Bloquear um conta através da agencia e conta ou através da chave pix).  
+Descrição: Representa os bloqueios em recursos específicos para gerenciar concorrência (ex: Bloquear um conta através da agencia e conta).  
 Colunas:  
   id: Identificador único do bloqueio (chave primária).  
   resource: Recurso que está sendo bloqueado (único e não nulo).  
@@ -296,22 +296,57 @@ __Frontend:__
 
 
 # Especificações conforme o Barema:
-1. _Permite gerenciar contas? O sistema realiza o gerenciamento de contas? Criar e realizar transações?_
+1. __Permite gerenciar contas? O sistema realiza o gerenciamento de contas? Criar e realizar transações?__
+- Sim, o sistema permite criar contas, realizar depósitos, fazer transações do tipo PIX, e do tipo TED.
 
-2. _Permite selecionar e realizar transferência entre diferentes contas? É possível transacionar entre diferentes bancos? Por exemplo, enviar do banco A, B e
-C, para o banco D?_
+2. __Permite selecionar e realizar transferência entre diferentes contas? É possível transacionar entre diferentes bancos? Por exemplo, enviar do banco A, B e
+C, para o banco D?__ 
+- Sim, a funcionalidade de transferência PIX permite realizar transferências entre diferentes contas, incluindo contas de bancos distintos. Na tela de transferência PIX, o usuário verá todas as suas contas existentes, tanto no banco atual quanto em outros bancos. Essa listagem de contas é possível devido à vinculação do atributo 'cpf_ou_cnpj' com as contas no momento da sua criação.  
 
-3. _Comunicação entre servidores Os bancos estão se comunicando com o protocolo adequado?_
+- Na tela de transferência, o usuário poderá inserir a chave PIX de destino e os valores a serem transferidos de cada conta desejada. Isso possibilita enviar dinheiro de contas de diferentes bancos (por exemplo, dos bancos Bradesco e Neon) para uma conta em outro banco (por exemplo, o banco Picpay), de forma simples e eficiente.
 
-4. _Sincronização em um único servidor Como tratou a concorrência em um único servidor, quando chegam mais de um pedido de transação a um único servidor?_
+3. __Comunicação entre servidores. Os bancos estão se comunicando com o protocolo adequado?__
+- Sim, os bancos estão se comunicando via protocolo HTTP (Hypertext Transfer Protocol). Essa comunicação facilita a transferência de valores entre contas de maneira segura e eficiente, utilizando diversas rotas específicas para diferentes operações. As principais rotas incluem:  
 
-5. _Algoritmo da concorrencia distribuída está teoricamente bem empregado? Qual algoritmo foi utilizado? Está correto para a solução?_  
+  - /depositar
+  - /transferencia/ted/enviar
+  - /transferencia/pix/enviar
+  - /transferencia/receber
+  - /transferencia/pix/descontar
+  - /transferencia/pix/reverter
+  - /obter_contas
 
-6. _Algoritmo está tratrando o problema na prática? A implementação do algoritmo está funcionamento corretamente?_
+  - O HTTP é adequado para essa comunicação entre bancos por várias razões. Ele é um protocolo amplamente utilizado e padronizado, o que facilita a integração entre sistemas de diferentes bancos. Além disso, o HTTP é simples de implementar, permitindo a troca de dados estruturados em formatos JSON. Ele também é adequado para sistemas escaláveis e distribuídos, permitindo que os servidores dos bancos possam aumentar a capacidade de seus sistema conforme necessário. Ademais, o HTTP facilita a comunicação entre diferentes plataformas e tecnologias, assegurando que os bancos possam se comunicar de forma eficiente mesmo que usem sistemas internos diferentes. Essas características tornam o HTTP uma escolha ideal para a comunicação segura e eficiente entre os sistemas bancários.
 
-7. _Tratamento da confiabilidade Quando um dos bancos perde a conexão, o sistema continua funcionando corretamente? E quando o banco retorna à conexão?_
+4. __Sincronização em um único servidor. Como tratou a concorrência em um único servidor, quando chegam mais de um pedido de transação a um único servidor?__
+-  A concorrência em um único servidor é tratada utilizando um mecanismo de bloqueio (lock) baseado em uma tabela de bloqueios (locks) no banco de dados. O objetivo é garantir que cada transação que afete uma conta específica seja processada de maneira segura, evitando inconsistências nos saldos das contas.
+  
+- A concorrência é tratada da seguinte maneira:
+  - Aquisição de Bloqueio (Lock):
+    - Quando uma operação é iniciada, o sistema tenta adquirir um bloqueio exclusivo para o recurso (neste caso, a conta bancária específica) utilizando a função acquire_lock(resource).  
+    - O bloqueio é implementado como uma entrada na tabela Lock com a coluna locked que indica se o recurso está atualmente bloqueado.  
+    - A função tenta repetidamente adquirir o bloqueio até um determinado tempo limite (timeout), esperando um curto período entre as tentativas (time.sleep(0.1)).
+      
+- Liberação de Bloqueio:
+  - Após a conclusão da operação, seja ela bem-sucedida ou não, o sistema libera o bloqueio utilizando a função release_lock(resource), que marca o recurso como desbloqueado (locked = False).
 
-8. _Pelo menos uma transação concorrente é realizada ?Como foi tratado o caso em que mais de duas transações ocorrem no mesmo banco de forma concorrente? O saldo fica correto? Os clientes conseguem realizar as transações?_
+- Operações Críticas:
+  - As operações críticas, como depósitos, saques e transferências, são envolvidas por tentativas de aquisição e liberação de bloqueio.  
+  - Se a aquisição do bloqueio falhar (por exemplo, porque o recurso está sendo utilizado por outra transação), a operação retorna uma resposta de erro apropriada (por exemplo, 423 'A conta de destino está sendo usada em outra operação').  
+ - Durante a aquisição do bloqueio (with_for_update(nowait=True)), o sistema utiliza operações no banco de dados para garantir que a verificação e a atualização do estado do bloqueio sejam atômicas.  
+ - Se uma operação falhar, o sistema realiza um rollback para garantir que o estado do banco de dados permaneça consistente.  
+
+
+
+5. __Algoritmo da concorrencia distribuída está teoricamente bem empregado? Qual algoritmo foi utilizado? Está correto para a solução?__
+
+6. __Algoritmo está tratrando o problema na prática? A implementação do algoritmo está funcionamento corretamente?__
+
+7. __Tratamento da confiabilidade. Quando um dos bancos perde a conexão, o sistema continua funcionando corretamente? E quando o banco retorna à conexão?__
+
+8. __Pelo menos uma transação concorrente é realizada ? Como foi tratado o caso em que mais de duas transações ocorrem no mesmo banco de forma concorrente? O saldo fica correto? Os clientes conseguem realizar as transações?__
+
+__Testes:__
 
 
 __CONCLUSÃO:__
