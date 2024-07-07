@@ -196,6 +196,11 @@ def depositar():
 
     # Se o depósito for para o mesmo banco de destino
     if banco_destino == BANCO_ID:
+        # Filtrando conta
+        conta_obj = Conta.query.filter_by(agencia=agencia_destino, conta=conta_destino).first()
+        if not conta_obj:
+            return jsonify({'erro': 'Conta de destino não encontrada'}), 404        
+
         lock_key_conta = f"{agencia_destino}-{conta_destino}"
 
         # Tenta adquirir o bloqueio para a conta de destino
@@ -203,9 +208,6 @@ def depositar():
             return jsonify({'erro': 'A conta de destino está sendo usada em outra operação'}), 423
 
         try:
-            conta_obj = Conta.query.filter_by(agencia=agencia_destino, conta=conta_destino).first()
-            if not conta_obj:
-                return jsonify({'erro': 'Conta de destino não encontrada'}), 404
             conta_obj.saldo += valor
             db.session.commit()
             return jsonify({'mensagem': 'Depósito realizado com sucesso'}), 200
@@ -242,6 +244,14 @@ def sacar():
     # Se o valor a ser sacado estiver zerado ou negativo
     if valor <= 0:
         return jsonify({'erro': f'Você não pode sacar {valor} reais'}), 423
+    # Filtrando a conta
+    conta_obj = Conta.query.filter_by(agencia=agencia, conta=conta).first()
+    if not conta_obj:
+        return jsonify({'erro': 'Conta não encontrada'}), 404
+    
+    # Verificando se o saldo é suficiente
+    if conta_obj.saldo < valor:
+        return jsonify({'erro': 'Saldo insuficiente'}), 400    
 
     lock_key_conta = f"{agencia}-{conta}"
     
@@ -250,19 +260,11 @@ def sacar():
         return jsonify({'erro': 'A conta está sendo usada em outra operação'}), 423
 
     try:
-        conta_obj = Conta.query.filter_by(agencia=agencia, conta=conta).first()
-        if not conta_obj:
-            return jsonify({'erro': 'Conta não encontrada'}), 404
-        # Verificando se o saldo é suficiente
-        if conta_obj.saldo < valor:
-            return jsonify({'erro': 'Saldo insuficiente'}), 400
-
+        # Decrementa o saldo
         conta_obj.saldo -= valor
         db.session.commit()
-
         return jsonify({'mensagem': 'Saque realizado com sucesso'}), 200
-    except Exception:
-        return jsonify({'erro': 'Ocorreu um erro ao processar a solicitação'}), 500
+    
     finally:
         # Libera o bloqueio
         release_lock(lock_key_conta)
@@ -408,41 +410,44 @@ def receber_transferencia():
         chave_pix_destino = dados['chave_pix_destino']
 
         # Verifica se a chave PIX de destino existe e é válida
-        conta_destino = Conta.query.filter((Conta.chave_pix_email == chave_pix_destino) |(Conta.chave_pix_aleatoria == chave_pix_destino) | (Conta.numero_celular == chave_pix_destino)).first()
+        conta_destino_obj = Conta.query.filter((Conta.chave_pix_email == chave_pix_destino) |(Conta.chave_pix_aleatoria == chave_pix_destino) | (Conta.numero_celular == chave_pix_destino)).first()
         # Se a chave pix não existe
-        if not conta_destino:
+        if not conta_destino_obj:
             return jsonify({'erro': 'Chave PIX de destino inválida'}), 400
+        
+        lock_key = f"{conta_destino_obj.agencia}-{conta_destino_obj.conta}"
 
-        lock_key_destino = f"pix-{chave_pix_destino}"
-
-    # Se for transferencia ted ou deposito
-    elif tipo == 'TED' or tipo == 'DEP':
+    # Se for transferencia ted, deposito ou reversão de saldo de outro banco.
+    elif tipo == 'TED' or tipo == 'DEP' or tipo == 'REVERT':
         agencia_destino = dados['agencia_destino']
         conta_destino = dados['conta_destino']
         # Filtra a conta
-        conta_destino = Conta.query.filter_by(agencia=agencia_destino, conta=conta_destino).first()
+        conta_destino_obj = Conta.query.filter_by(agencia=agencia_destino, conta=conta_destino).first()
         # Se a conta não existir
-        if not conta_destino:
+        if not conta_destino_obj:
             return jsonify({'erro': 'Conta de destino não encontrada'}), 404
 
-        lock_key_destino = f"{agencia_destino}-{conta_destino}"
+        lock_key = f"{agencia_destino}-{conta_destino}"
     else:
         return jsonify({'erro': 'Tipo de transferência inválido'}), 400
 
     # Tenta adquirir o bloqueio para a conta de destino
-    if not acquire_lock(lock_key_destino):
+    if not acquire_lock(lock_key):
         return jsonify({'erro': 'A conta de destino está sendo usada em outra operação'}), 423
 
     try:
-        conta_destino.saldo += valor
+        conta_destino_obj.saldo += valor
         db.session.commit()
         if tipo == 'DEP':
             return jsonify({'mensagem': f'Deposito enviado com sucesso para banco {BANCO_ID}'}), 200
+        elif tipo == 'REVERT':
+            return jsonify({'mensagem': f'Saldo revertido com sucesso para o banco {BANCO_ID}'}), 200
         else:
             return jsonify({'mensagem': f'Transferência enviada com sucesso para o banco {BANCO_ID}'}), 200
+
     finally:
         # Libera o bloqueio
-        release_lock(lock_key_destino)
+        release_lock(lock_key)
 
 
 
@@ -585,9 +590,10 @@ def enviar_transferencia_pix():
                     else:
                         url_origem = bank_urls[banco]
                         try:
-                            requests.post(f'{url_origem}/transferencia/pix/reverter', json={
-                                'agencia': agencia,
-                                'conta': conta,
+                            requests.post(f'{url_origem}/transferencia/receber', json={
+                                'tipo': 'REVERT',
+                                'agencia_destino': agencia,
+                                'conta_destino': conta,
                                 'valor': valor
                             })
                         except RequestException:
@@ -642,9 +648,10 @@ def enviar_transferencia_pix():
                 else:
                     url_origem = bank_urls[banco]
                     try:
-                        requests.post(f'{url_origem}/transferencia/pix/reverter', json={
-                            'agencia': agencia,
-                            'conta': conta,
+                        requests.post(f'{url_origem}/transferencia/receber', json={
+                            'tipo': 'REVERT',
+                            'agencia_destino': agencia,
+                            'conta_destino': conta,
                             'valor': valor
                         })
                     except RequestException:
@@ -652,10 +659,6 @@ def enviar_transferencia_pix():
             return jsonify({'erro': 'Falha na transferência PIX para o banco destino'}), 503
 
     return jsonify({'mensagem': 'Transferência PIX realizada com sucesso'}), 200
-
-
-
-
 
 
 
@@ -667,56 +670,26 @@ def descontar_saldo():
     conta = dados['conta']
     valor = dados['valor']
     
+    # Filtra a conta
+    conta_obj = Conta.query.filter_by(agencia=agencia, conta=conta).first()
+    if not conta_obj:
+        return jsonify({'erro': 'Conta não encontrada'}), 404
+    # Verifica saldo
+    if conta_obj.saldo < valor:
+        return jsonify({'erro': 'Saldo insuficiente'}), 400
+
     # Tenta adquirir o bloqueio da conta 
     lock_key = f"{agencia}-{conta}"
     if not acquire_lock(lock_key):
         return jsonify({'erro': f'A conta {agencia}-{conta} está sendo usada em outra operação'}), 423
 
     try:
-        # Filtra a conta
-        conta_obj = Conta.query.filter_by(agencia=agencia, conta=conta).first()
-        if not conta_obj:
-            return jsonify({'erro': 'Conta não encontrada'}), 404
-        # Verifica saldo
-        if conta_obj.saldo < valor:
-            return jsonify({'erro': 'Saldo insuficiente'}), 400
         conta_obj.saldo -= valor # desconta
         db.session.commit()
+        return jsonify({'mensagem': 'Saldo descontado com sucesso'}), 200
     finally:
         # Libera o bloqueio
         release_lock(lock_key)
-    return jsonify({'mensagem': 'Saldo descontado com sucesso'}), 200
-
-
-
-
-# Rota para reverter saldo em caso de falha na transferência
-@app.route('/transferencia/pix/reverter', methods=['POST'])
-def reverter_saldo():
-    dados = request.json
-    agencia = dados['agencia']
-    conta = dados['conta']
-    valor = dados['valor']
-    # Tenta adiquirir o bloqueio da conta
-    lock_key = f"{agencia}-{conta}"
-    if not acquire_lock(lock_key):
-        return jsonify({'erro': f'A conta {agencia}-{conta} está sendo usada em outra operação'}), 423
-
-    try:
-        # Filtra a conta
-        conta_obj = Conta.query.filter_by(agencia=agencia, conta=conta).first()
-        if not conta_obj:
-            return jsonify({'erro': 'Conta não encontrada'}), 404
-
-        conta_obj.saldo += valor # devolve
-        db.session.commit()
-    finally:
-        # Libera o bloqueio
-        release_lock(lock_key)
-
-    return jsonify({'mensagem': 'Saldo revertido com sucesso'}), 200
-
-
 
 
 
