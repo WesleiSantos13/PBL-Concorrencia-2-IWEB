@@ -272,3 +272,25 @@ __Rotas do servidor:__
   Essa rota permite visualizar todas as chaves PIX registradas para uma conta específica.  
   Recepção dos Dados: A rota recebe os parâmetros de consulta contendo a agência e a conta.
   
+__Frontend:__
+
+* Pasta _templates_:
+  Nessa pasta está os arquivos das telas em HTML.  
+  * As telas são:  
+    - Index  
+    - Login  
+    - Criar conta  
+    - Depósito  
+    - Transferência PIX  
+    - Transferência TED  
+    - Sacar  
+    - Minhas chaves pix  
+    - Dashboard
+
+* Pasta _static_:  
+  Nessa pasta está um arquivo único de CSS responsável pelas formas, cores e padrões da aplicação.
+
+* Arquivo _app.py_
+  Esse arquivo fica reponsável pela integração das funcionalidades das rotas com a interface.
+  
+
