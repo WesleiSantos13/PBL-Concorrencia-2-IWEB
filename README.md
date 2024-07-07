@@ -346,20 +346,34 @@ C, para o banco D?__
     
   - Então, cada banco é responsável por gerenciar seus próprios locks, garantindo que a concorrência seja controlada localmente. Isso significa que a rota /transferencia/receber em cada banco atua de forma distribuída, bloqueando apenas as contas relevantes para as transações que chegam.
 
+* Algoritmo de transferência PIX:  
+- Na transferência PIX, o sistema utiliza um algoritmo inspirado no Two-Phase Commit. A primeira fase é a de preparação, onde todas as contas de origem são verificadas para garantir que possuem saldo suficiente para a transferência. Cada conta é identificada pelo CPF ou CNPJ, e são adquiridos o código do banco, número de agência, número de conta e saldo.
+
+- Na segunda fase, os valores são descontados das contas de origem, similar à fase de commit do Two-Phase Commit. Se houver qualquer erro durante o desconto de alguma conta, o processo entra em uma fase de abortar, revertendo os saldos já descontados e cancelando a transferência.
+
+- Caso a fase de desconto ocorra com sucesso, a próxima etapa é direcionar o valor total das contas de origem para a conta de destino através da chave PIX. Se ocorrer algum erro na transferência, os valores das contas de origem são revertidos, garantindo a integridade das transações.
+
     
 
 6. __Algoritmo está tratrando o problema na prática? A implementação do algoritmo está funcionamento corretamente?__
 
-- O uso de locks distribuídos é teoricamente robusto para sistemas distribuídos, pois oferece um método seguro para lidar com operações concorrentes. Na prática, o sistema implementado demonstra adequação ao contexto bancário, garantindo que operações como depósitos, transferências TED e PIX sejam tratadas de maneira confiável, mesmo sob cargas de trabalho distribuídas entre múltiplos bancos.
+- Na prática, o sistema implementado demonstra adequação ao contexto bancário, garantindo que operações como depósitos, transferências TED e PIX sejam tratadas de maneira confiável, mesmo sob cargas de trabalho distribuídas entre diferentes bancos.
 
 - Para ilustrar a eficácia dos locks implementados, considere o cenário onde uma conta está recebendo duas transferências simultâneas: uma de outra conta no mesmo banco e outra de um banco externo. Quando a conta recebe a primeira transferência, um lock é adquirido temporariamente para garantir que apenas uma transação modifique seu saldo por vez. Enquanto isso, a segunda transferência, vinda de um banco externo, tenta adquirir o mesmo lock.
 
--  A tentativa de adquirir o lock é limitada a um timeout de 10 segundos. Se a conta consegue liberar o lock dentro desse período, a segunda transação é concluída com sucesso. Caso contrário, se o lock não é liberado a tempo, a segunda transação é cancelada, garantindo que a integridade dos dados seja preservada e que apenas uma operação seja processada por vez para a conta em questão.
+-  A tentativa de adquirir o lock é limitada a um timeout de 10 segundos. Se a conta consegue liberar o lock dentro desse período, a segunda transação poderá ser realizada. Caso contrário, se o lock não é liberado a tempo, a segunda transação é cancelada, garantindo que a integridade dos dados seja preservada e que apenas uma operação seja processada por vez para a conta em questão.
+- As rotas que usam o sistema de locks são: a rota de saque, deposito, transferencia ted e pix, a rota de receber transferensia e descontar valores.
 
+* Algoritmo de transferência PIX:  
+  - O algoritmo da transferência PIX consegue descontar o valor de cada conta de origem e transferir o total para a conta de destino. Em caso de qualquer erro durante o processo, os saldos descontados são revertidos para garantir a consistência dos dados.
+  
 7. __Tratamento da confiabilidade. Quando um dos bancos perde a conexão, o sistema continua funcionando corretamente? E quando o banco retorna à conexão?__
+   
+- Sim, quando o banco perde a conexão, a aplicação perde o contato com o servidor. No entanto, isso não resulta em erros graves na aplicação devido aos tratamentos de erro implementados. A aplicação continua tentando acessar as funcionalidades do banco, mas não consegue até que a conexão seja restabelecida. Quando a conexão volta, o sistema retorna ao funcionamento normal, permitindo que as operações sejam retomadas sem perda de dados ou inconsistências significativas.
 
+  
 8. __Pelo menos uma transação concorrente é realizada ? Como foi tratado o caso em que mais de duas transações ocorrem no mesmo banco de forma concorrente? O saldo fica correto? Os clientes conseguem realizar as transações?__
-
+- Sim, o tratamento da concorrência ocorre da mesma maneira antes citada, o lock bloqueia a conta especifica e durante 10 segundos as outra tentam adquirir esse lock caso o tempo se esgote só uma realizada, mas se liberar a tempo as que primeiro tentara
 __Testes:__
 
 
