@@ -337,11 +337,24 @@ C, para o banco D?__
   - Durante a aquisição do bloqueio (with_for_update(nowait=True)), o sistema utiliza operações no banco de dados para garantir que a verificação e a atualização do estado do bloqueio sejam atômicas.  
   - Se uma operação falhar, o sistema realiza um rollback para garantir que o estado do banco de dados permaneça consistente.  
 
-
-
+  - Resumindo, quando múltiplos pedidos de transação são recebidos para uma conta, o bloqueio garante que apenas um processo por vez possa modificar o saldo, assegurando a consistência e evitando conflitos de dados.
+    
 5. __Algoritmo da concorrencia distribuída está teoricamente bem empregado? Qual algoritmo foi utilizado? Está correto para a solução?__
+  - O sistema utiliza um mecanismo de locks distribuídos para gerenciar o acesso concorrente às contas bancárias. Cada conta é associada a uma chave de bloqueio (lock_key), garantindo que apenas um processo por vez possa modificar o saldo da conta. Esse método é fundamental para manter a consistência dos dados no ambiente distribuído, impedindo condições de corrida que poderiam ocorrer se múltiplos processos tentassem modificar o mesmo recurso simultaneamente.
+    
+  - Por exemplo, ao realizar uma transferência TED do banco Bradesco para o banco Neon, a rota /transferencia/receber no banco Neon escuta e processa a transação recebida. Antes de modificar o saldo da conta de destino, a rota adquire um lock específico para essa conta (representado pela lock_key associada à agência e conta). Esse lock é crucial para garantir que outras transações ou operações que afetem a mesma conta sejam bloqueadas temporariamente, assegurando a integridade dos dados durante a modificação do saldo.
+    
+  - Então, cada banco é responsável por gerenciar seus próprios locks, garantindo que a concorrência seja controlada localmente. Isso significa que a rota /transferencia/receber em cada banco atua de forma distribuída, bloqueando apenas as contas relevantes para as transações que chegam.
+
+    
 
 6. __Algoritmo está tratrando o problema na prática? A implementação do algoritmo está funcionamento corretamente?__
+
+- O uso de locks distribuídos é teoricamente robusto para sistemas distribuídos, pois oferece um método seguro para lidar com operações concorrentes. Na prática, o sistema implementado demonstra adequação ao contexto bancário, garantindo que operações como depósitos, transferências TED e PIX sejam tratadas de maneira confiável, mesmo sob cargas de trabalho distribuídas entre múltiplos bancos.
+
+- Para ilustrar a eficácia dos locks implementados, considere o cenário onde uma conta está recebendo duas transferências simultâneas: uma de outra conta no mesmo banco e outra de um banco externo. Quando a conta recebe a primeira transferência, um lock é adquirido temporariamente para garantir que apenas uma transação modifique seu saldo por vez. Enquanto isso, a segunda transferência, vinda de um banco externo, tenta adquirir o mesmo lock.
+
+-  A tentativa de adquirir o lock é limitada a um timeout de 10 segundos. Se a conta consegue liberar o lock dentro desse período, a segunda transação é concluída com sucesso. Caso contrário, se o lock não é liberado a tempo, a segunda transação é cancelada, garantindo que a integridade dos dados seja preservada e que apenas uma operação seja processada por vez para a conta em questão.
 
 7. __Tratamento da confiabilidade. Quando um dos bancos perde a conexão, o sistema continua funcionando corretamente? E quando o banco retorna à conexão?__
 
