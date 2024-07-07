@@ -117,20 +117,24 @@ Para executar em qualquer máquina os containers:
 
 Para garantir o correto funcionamento do sistema, certifique-se de colocar os IPs corretos onde cada banco está sendo executado. Por exemplo, ao executar wesleisantoss/bradesco, defina IP_neon e IP_picpay com os IPs das máquinas onde os bancos Neon e PicPay estão rodando. Repita o mesmo processo para os demais bancos (wesleisantoss/neon e wesleisantoss/picpay). Depois, configure a aplicação (wesleisantoss/app) com os IPs de onde cada banco está executando usando as variáveis IP_bradesco, IP_neon e IP_picpay e então execute a aplicação.  
 
-* A rota de acesso da aplicação aparecerá :
-  
-    http://localhost:9999/ ou o Ip da máquina qual está executando
+* Devido ao mapeamento de porta na execução do app, a url de acesso do app ficará com o endereço IP interno da rede Docker. No entanto, esse endereço IP é acessível apenas dentro da rede Docker, não externamente. Por isso, é necessário usar o endereço IP da máquina host (o IP real da máquina onde o container está rodando).
+
+* Exemplo: 
+
+   Se a url for http://172.17.0.2:9999 colocando o ip da máquina onde o container está executando, a nova url ficará mais ou menos assim:
+
+      http://172.16.103.4:9999/
 
 __INTRODUÇÃO:__  
 
-Este projeto visa implementar um sistema de transações bancárias distribuídas que inclui três bancos fictícios inspirados em instituições reais: Bradesco, Neon e PicPay. O servidor oferece funcionalidades essenciais para operações bancárias, como criação de contas, login, saques, transferência TED e PIX. Além disso, o sistema suporta depósitos e transferências tanto dentro do mesmo banco quanto para bancos de destino diferentes.
+  Este projeto visa implementar um sistema de transações bancárias distribuídas que inclui três bancos fictícios inspirados em instituições reais: Bradesco, Neon e PicPay. O servidor oferece funcionalidades essenciais para operações bancárias, como criação de contas, login, saques, transferência TED e PIX. Além disso, o sistema suporta depósitos e transferências tanto dentro do mesmo banco quanto para bancos de destino diferentes.
 
 
 __DIAGRAMA DO SISTEMA:__
 
    ![Diagrama de Comunicação](./Diagrama%20do%20sistema.png)
 
-* O app pode selecionar qual banco irá acessar, ele pode escolher entre Bradesco, Picpay e neon.
+* O app pode selecionar qual banco irá acessar, ele pode escolher entre Bradesco, Picpay e Neon.
 * Quando a operação de um banco tiver outro banco como destino, ele irá acessar a tabela de roteamento para poder ter acesso a rota do banco referente.
 * Todos as comunicações entre os componentes no diagrama ocorre via HTTP.
 
