@@ -257,18 +257,18 @@ __Rotas do servidor:__
   Recepção dos Dados: A rota recebe o CPF ou CNPJ como parâmetro de consulta.
 
 * Rota /obter_contas  
-  Essa rota busca todas as contas de um titular específico no banco atual.
+  Essa rota busca todas as contas de um titular específico no banco atual.  
   Recepção dos Dados: A rota recebe o CPF ou CNPJ como parâmetro de consulta.
 
-* Rota /pix/cadastrar
+* Rota /pix/cadastrar  
   Essa rota cadastra uma nova chave PIX para uma conta específica.  
   Recepção dos Dados: A rota recebe um JSON contendo a agência, conta, chave PIX e o tipo da chave (Email, Aleatória ou Telefone).
 
-* Rota /pix/apagar
-  Essa rota apaga uma chave PIX previamente cadastrada em uma conta.
+* Rota /pix/apagar  
+  Essa rota apaga uma chave PIX previamente cadastrada em uma conta.  
   Recepção dos Dados: A rota recebe um JSON contendo a agência, conta e o tipo da chave (Email, Aleatória ou Telefone).
 
-* Rota /pix/visualizar
-  Essa rota permite visualizar todas as chaves PIX registradas para uma conta específica.
+* Rota /pix/visualizar  
+  Essa rota permite visualizar todas as chaves PIX registradas para uma conta específica.  
   Recepção dos Dados: A rota recebe os parâmetros de consulta contendo a agência e a conta.
   
