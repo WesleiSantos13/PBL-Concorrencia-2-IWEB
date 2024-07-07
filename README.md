@@ -312,3 +312,6 @@ C, para o banco D?_
 7. _Tratamento da confiabilidade Quando um dos bancos perde a conexão, o sistema continua funcionando corretamente? E quando o banco retorna à conexão?_
 
 8. _Pelo menos uma transação concorrente é realizada ?Como foi tratado o caso em que mais de duas transações ocorrem no mesmo banco de forma concorrente? O saldo fica correto? Os clientes conseguem realizar as transações?_
+
+
+__CONCLUSÃO:__
