@@ -288,9 +288,13 @@ __Frontend:__
     - Dashboard
 
 * Pasta _static_:  
-  Nessa pasta está um arquivo único de CSS responsável pelas formas, cores e padrões da aplicação.
+  Nessa pasta está um arquivo único de CSS (styles.css) responsável pelas formas, cores e padrões da aplicação.
 
-* Arquivo _app.py_
-  Esse arquivo fica reponsável pela integração das funcionalidades das rotas com a interface.
+* Arquivo _app.py_  
+  Este arquivo é responsável por integrar as funcionalidades das rotas com a interface do usuário (Back-end e Front-end).
+
+
+
+# Barema:
   
 
