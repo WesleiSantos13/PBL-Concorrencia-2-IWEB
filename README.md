@@ -127,16 +127,16 @@ Para garantir o correto funcionamento do sistema, certifique-se de colocar os IP
 
 __INTRODUÇÃO:__  
 
-  Este projeto visa implementar um sistema de transações bancárias distribuídas que inclui três bancos fictícios inspirados em instituições reais: Bradesco, Neon e PicPay. O servidor oferece funcionalidades essenciais para operações bancárias, como criação de contas, login, saques, transferência TED e PIX. Além disso, o sistema suporta depósitos e transferências tanto dentro do mesmo banco quanto para bancos de destino diferentes.
+  Este projeto visa implementar um sistema de transações bancárias distribuídas, que inclui três bancos fictícios inspirados em instituições reais: Bradesco, Neon e PicPay. O servidor oferece funcionalidades essenciais para operações bancárias, como criação de contas, login, saques, transferência TED e PIX. Além disso, o sistema suporta depósitos e transferências tanto dentro do mesmo banco quanto para bancos de destino diferentes.
 
 
-__DIAGRAMA DO SISTEMA:__
+                                                 #DIAGRAMA DO SISTEMA:
 
    ![Diagrama de Comunicação](./Diagrama%20do%20sistema.png)
 
 * O app pode selecionar qual banco irá acessar, ele pode escolher entre Bradesco, Picpay e Neon.
-* Quando a operação de um banco tiver outro banco como destino, ele irá acessar a tabela de roteamento para poder ter acesso a rota do banco referente.
-* Todos as comunicações entre os componentes no diagrama ocorre via HTTP.
+* Quando a operação de um banco tiver outro banco como destino, ele irá acessar as rotas dos outros bancos para poder realizar a mesma.
+* Todos as comunicações entre os componentes do diagrama ocorre via HTTP.
 
 
 
@@ -151,7 +151,7 @@ _Bradesco.py:__
 * BANCO_ID = '237'
 
 _Neon.py:__  
-* app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bradesco.db'
+* app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///neon.db'
 * PORT = 9635
 * BANCO_ID = '536'
 
@@ -193,7 +193,7 @@ Colunas:
 
    
 4. Tabela Lock:  
-Descrição: Representa os bloqueios em recursos específicos para gerenciar concorrência(ex: Bloquear um conta através da agencia e conta ou através da chave pix).  
+Descrição: Representa os bloqueios em recursos específicos para gerenciar concorrência (ex: Bloquear um conta através da agencia e conta ou através da chave pix).  
 Colunas:  
   id: Identificador único do bloqueio (chave primária).  
   resource: Recurso que está sendo bloqueado (único e não nulo).  
@@ -204,9 +204,6 @@ __Funções de Bloqueio:__
 * Função acquire_lock: Tenta adquirir um bloqueio exclusivo em um recurso específico. Se o recurso já estiver bloqueado, a função aguardará até que o bloqueio possa ser adquirido ou o tempo limite seja atingido.  
 * Função release_lock: Libera um bloqueio em um recurso específico, permitindo que outros processos possam adquirir o bloqueio no futuro.
 
-__Função obter_tabela_roteamento:__ Esta função faz uma solicitação HTTP GET para obter as rotas dos bancos a partir do servidor de roteamento.
-
-__Função atualizar_tabela_roteamento:__ Esta função registra as informações de um banco específico no servidor de roteamento.
 
 __Rotas do servidor:__  
 * Rota /login  
@@ -217,7 +214,7 @@ __Rotas do servidor:__
   Esta rota permite que o usuário crie uma conta do tipo que escolher (PFI, PFC, PJ)
   Recepção dos Dados: Recebe dados JSON do cliente contendo senha e tipo_conta.
      - Se a conta for conjunta ela recebe um conjunto de titulares com nome, CPFs.
-     - Se a conta for individual ou jurídica, ele recebe o CPF e nome do titular. (Para conta jurídica o nome do titular irá representar a razão social da empresa ou organização).
+     - Se a conta for individual ou jurídica, ele recebe o CPF ou CNPJ e nome do titular. (Para conta jurídica o nome do titular irá representar a razão social da empresa ou organização).
 
 * Rota /depositar  
   Essa rota permite que o usuário faça depositos em qualquer conta, em qualquer banco.  
@@ -228,7 +225,7 @@ __Rotas do servidor:__
   Recepção dos Dados: Recebe dados JSON do cliente contendo a agência, conta e valor.  
 
 * Rota /saldo  
-  Essa rota permite vizualizar o saldo da conta logada.  
+  Essa rota permite vizualizar o saldo da conta.  
   Recepção dos Dados: Recebe dados JSON do cliente contendo a agência e conta.  
 
 * Rota /transferencia/ted/enviar  
@@ -236,8 +233,42 @@ __Rotas do servidor:__
   Recepção dos Dados: Recebe dados JSON do cliente contendo a agência e conta de origem, a agência e conta de destino e o valor a ser transferido.
 
 * Rota /transferencia/pix/enviar  
-  Essa rota permite que o cliente envie valores de diferentes contas vinculadas ao seu CPF para outra conta por meio da chave PIX.  (N para 1)
+  Essa rota permite que o cliente envie valores de diferentes contas vinculadas ao seu CPF para outra conta, por meio da chave PIX.  (N para 1)  
   Recepção dos Dados: Recebe dados JSON do cliente contendo as contas de origem com suas informações de agência, conta, banco e valor a ser transferido de cada banco.
 
-* Rota /transferencia/receber
- Essa rota permite que o ban
+* Rota /transferencia/receber  
+  Essa rota é a que fica responsável por receber depósitos ou transferência (TED ou PIX) de outros bancos.  
+  Recepção dos Dados: Recebe um JSON contendo o tipo de transferência (TED, PIX ou DEP para depósito) e o valor a ser transferido. Para transferências PIX, inclui a chave PIX do destinatário. Para transferências TED e depósitos, inclui o número da agência e o número da conta de destino.
+
+* Rota /pix/chave  
+  Essa rota permite que outros bancos verifiquem se uma chave PIX já está cadastrada no banco atual.  
+  Recepção dos Dados: A rota recebe a chave PIX a ser verificada.
+
+* Rota /transferencia/pix/descontar  
+  Essa rota permite descontar saldo de uma conta específica no banco.  
+  Recepção dos Dados: A rota recebe um JSON contendo o número da agência da conta, o número da conta e o valor a ser descontado.  
+
+* Rota /transferencia/pix/reverter  
+  Essa rota permite reverter o saldo de uma conta específica em caso de falha na transferência.  
+  Recepção dos Dados: A rota recebe um JSON contendo o número da agência da conta, o número da conta e o valor a ser revertido.
+
+* Rota /obter_contas_todos_bancos  
+  Essa rota busca todas as contas de um mesmo titular em todos os bancos.  
+  Recepção dos Dados: A rota recebe o CPF ou CNPJ como parâmetro de consulta.
+
+* Rota /obter_contas  
+  Essa rota busca todas as contas de um titular específico no banco atual.
+  Recepção dos Dados: A rota recebe o CPF ou CNPJ como parâmetro de consulta.
+
+* Rota /pix/cadastrar
+  Essa rota cadastra uma nova chave PIX para uma conta específica.  
+  Recepção dos Dados: A rota recebe um JSON contendo a agência, conta, chave PIX e o tipo da chave (Email, Aleatória ou Telefone).
+
+* Rota /pix/apagar
+  Essa rota apaga uma chave PIX previamente cadastrada em uma conta.
+  Recepção dos Dados: A rota recebe um JSON contendo a agência, conta e o tipo da chave (Email, Aleatória ou Telefone).
+
+* Rota /pix/visualizar
+  Essa rota permite visualizar todas as chaves PIX registradas para uma conta específica.
+  Recepção dos Dados: A rota recebe os parâmetros de consulta contendo a agência e a conta.
+  
