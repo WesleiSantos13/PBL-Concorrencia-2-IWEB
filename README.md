@@ -158,7 +158,8 @@ _Neon.py:__
 _Picpay.py:__  
 * app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///picpay.db'
 * PORT = 9637
-* BANCO_ID = '380'
+* BANCO_ID = '380'  
+
 
 * __Banco de Dados:__
   - Nos bancos, são usadas quatro tabelas no banco de dados flask_sqlalchemy. Aqui estão as tabelas e suas funções:
