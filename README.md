@@ -467,4 +467,24 @@ Após isso, observou-se que todas as operações ocorreram com sucesso, indicand
 A conta conjunta, que teve o maior número de operações, apresentou um saldo coerente.  
 Assim como no teste de concorrência distribuída, à medida que o número de operações aumenta, a probabilidade de uma transação ser cancelada devido ao bloqueio de recursos também aumenta. 
 
+Ex:
+- Aumentando mais duas transferência pix (mesmo teste com mais duas transferência).
+
+      Depósito: {'mensagem': 'Depósito realizado com sucesso'}  
+      Transferência PIX: {'mensagem': 'Transferência PIX realizada com sucesso'}
+      Saque: {'mensagem': 'Saque realizado com sucesso'}
+      Transferência PIX: {'mensagem': 'Transferência PIX realizada com sucesso'}
+      Transferência TED: {'erro': 'A conta de origem está sendo usada em outra operação'}
+      Transferência PIX: {'erro': 'A conta de origem está sendo usada em outra operação'}
+  
+  Nesse caso, durante as operações simultâneas, uma transferência PIX e uma TED falharam devido ao bloqueio.
+
+  Verificação dos saldos após operações:
+
+      Agência: 3232 Conta: 474422 - Saldo esperado: 100 - Saldo real: 250.0
+      Agência: 3683 Conta: 436082 - Saldo esperado: 50 - Saldo real: 100.0
+      Agência: 3032 Conta: 307237 - Saldo esperado: 600 - Saldo real: 400.0
+  
+   Observou-se que, apesar de duas transferências terem sido canceladas, os saldos permaneceram corretos.
+
 __CONCLUSÃO:__
