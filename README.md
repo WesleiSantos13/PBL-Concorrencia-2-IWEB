@@ -63,9 +63,9 @@ Dessa forma, basta acessar a rota no navegador (http://172.31.160.1:9999) para q
      Se o login falhar, o usuário não tem acesso as demais operações de cliente do banco.
      
    - Criar conta:  
-      O usuário pode escolher entre conta pessoa fisica individual (PFI), conta pessoa fisica conjunta (PFC) e conta juridica (PJ).
-      O usuário pode criar apenas uma conta individual com o seu CPF, e varias contas conjuntas, contanto que seja com titulares diferentes.
-      Para conta juridica, também só é possivel criar uma conta com o mesmo cnpj.
+      O usuário pode escolher entre conta pessoa fisica individual (PFI), conta pessoa fisica conjunta (PFC) e conta juridica (PJ).  
+      O usuário pode criar apenas uma conta individual por banco com o seu CPF, e varias contas conjuntas, contanto que seja com titulares diferentes.  
+      Para conta juridica, também só é possivel criar uma conta com o mesmo CNPJ.
      
   *  Selecionar a opção de operação (Estágio 2- pós login):  
      Após fazer o login as operações disponíveis na dashboard são:  
