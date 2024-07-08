@@ -376,10 +376,66 @@ C, para o banco D?__
 - Sim, o tratamento da concorrência é feito utilizando locks, conforme mencionado anteriormente. Quando uma transação é iniciada, um lock é adquirido para a conta específica, impedindo outras operações na mesma conta. As demais transações tentam adquirir o lock durante um período de até 10 segundos. Se o tempo se esgotar, apenas a transação que conseguiu obter o lock primeiro é realizada. No entanto, se o lock for liberado dentro do prazo, as transações subsequentes que conseguirem adquirir o bloqueio também são realizadas. Dessa forma, o saldo das contas permanece correto, e os clientes conseguem realizar suas transações de maneira consistente.
 
 
-__Testes:__  
-Foram realizados dois testes um para a concorrência distribuida e outro para a concorrencia em um unico servidor.
-Na concorrencia distribuida foram criadas 7 contas no total uma delas sendo conjunta e outra a de destino.
-Inicialmente, foi feito um deposito em cada conta no valor de 200 reais, exceto a conta de destino.
-Depois, foi feita a 3 transferências pix e todas adquir 
+__Testes:__
 
+Foram realizados dois testes, um para a concorrência distribuída e outro para a concorrência em um único servidor.  
+
+_concorrencia_distribuida.py:_  
+
+No teste da concorrência distribuída foram criadas 7 contas no total, uma delas sendo conjunta e as outras 6 individuais. Entre essas 6 estava a conta de destino.  
+Inicialmente, foi feito um depósito em cada conta no valor de 200 reais, exceto na conta de destino:
+
+    Depósito: {'mensagem': 'Depósito realizado com sucesso'}
+    Depósito: {'mensagem': 'Depósito realizado com sucesso'}
+    Depósito: {'mensagem': 'Depósito realizado com sucesso'}
+    Depósito: {'mensagem': 'Depósito realizado com sucesso'}
+    Depósito: {'mensagem': 'Depósito realizado com sucesso'}
+    Depósito: {'mensagem': 'Depósito realizado com sucesso'}
+    
+Cadastro a chave uma chave pix no conta de destino:
+
+    Cadastro de Chave PIX: {'mensagem': 'Chave PIX cadastrada com sucesso'}
+    
+Depois, foi feita 3 transferências pix para uma mesma conta para uma mesma conta do banco picpay:
+
+    Transferência PIX (http://172.31.160.1:9637): {'mensagem': 'Transferência PIX realizada com sucesso'}
+    Transferência PIX (http://172.31.160.1:9635): {'mensagem': 'Transferência PIX realizada com sucesso'}
+    Transferência PIX (http://172.31.160.1:9636): {'mensagem': 'Transferência PIX realizada com sucesso'}
+
+* Verificação dos saldos após transferências:
+  
+      Agência: 3071 Conta: 423313 - Saldo esperado: 100 - Saldo real: 100.0
+      Agência: 2309 Conta: 350947 - Saldo esperado: 150 - Saldo real: 150.0
+      Agência: 3013 Conta: 438669 - Saldo esperado: 100 - Saldo real: 100.0
+      Agência: 4280 Conta: 471768 - Saldo esperado: 100 - Saldo real: 100.0
+      Agência: 2031 Conta: 392858 - Saldo esperado: 125 - Saldo real: 125.0
+      Agência: 4505 Conta: 366228 - Saldo esperado: 125 - Saldo real: 125.0
+      Agência: 4078 Conta: 790459 - Saldo esperado: 500 - Saldo real: 500.0
+
+Após isso, observa-se que todas ocorreram com sucesso, ou seja, a concorrência foi tratada corretamente.  
+É importante ressaltar que todas essas transferências foram realizadas dos três bancos (Bradesco, Neon e PicPay) para um único banco (PicPay).
+
+* À medida que se aumenta o número de transferências, algumas começam a falhar devido ao bloqueio de contas.
+
+Ex:
+- Aumentando mais uma transferência pix (mesmo teste com o mais uma transferência).  
+ 
+      Transferência PIX (http://172.31.160.1:9637): {'mensagem': 'Transferência PIX realizada com sucesso'}
+      Transferência PIX (http://172.31.160.1:9637): {'mensagem': 'Transferência PIX realizada com sucesso'}
+      Transferência PIX (http://172.31.160.1:9636): {'mensagem': 'Transferência PIX realizada com sucesso'}
+      Transferência PIX (http://172.31.160.1:9635): {'erro': 'Falha na transferência PIX para o banco destino'}
+  
+- Então, a última transferência falha devido ao bloqueio da conta de destino que está recebendo várias transferências concorrentes.
+
+* Verificação dos saldos após transferências:
+  
+      Agência: 3689 Conta: 493661 - Saldo esperado: 100 - Saldo real: 150.0 # A falha veio da transferência pix dessa conta
+      Agência: 2306 Conta: 597990 - Saldo esperado: 150 - Saldo real: 200.0 # A falha veio da transferência pix dessa conta
+      Agência: 3047 Conta: 491849 - Saldo esperado: 100 - Saldo real: 100.0
+      Agência: 4774 Conta: 503156 - Saldo esperado: 100 - Saldo real: 100.0
+      Agência: 2323 Conta: 881032 - Saldo esperado: 50 - Saldo real: 50.0
+      Agência: 4586 Conta: 368771 - Saldo esperado: 50 - Saldo real: 50.0
+      Agência: 4464 Conta: 531200 - Saldo esperado: 650 - Saldo real: 550.0 # Conta de destino
+
+Ou seja, as contas que falharam em transferir foram aquela que estavam na transferencia pix que falhou.
 __CONCLUSÃO:__
