@@ -116,7 +116,8 @@ def teste_concorrencia_distribuida():
     threads.append(threading.Thread(target=realizar_transferencia_pix, args=(BASE_URL_1, chave_pix_destino, contas_origem_pix_1)))
     threads.append(threading.Thread(target=realizar_transferencia_pix, args=(BASE_URL_2, chave_pix_destino, contas_origem_pix_2)))
     threads.append(threading.Thread(target=realizar_transferencia_pix, args=(BASE_URL_3, chave_pix_destino, contas_origem_pix_3)))
-    
+    #threads.append(threading.Thread(target=realizar_transferencia_pix, args=(BASE_URL_3, chave_pix_destino, contas_origem_pix_3)))
+
     # Iniciando as threads
     for thread in threads:
         thread.start()
