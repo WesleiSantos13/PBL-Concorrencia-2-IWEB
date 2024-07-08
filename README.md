@@ -22,7 +22,7 @@ Instalar a biblioteca responsável pelo banco de dados (flask_sqlalchemy), que a
 
     pip install flask_sqlalchemy
     
-Por fim, instalar uma biblioteca adicional para exibir continualmente as informações de conta do banco, que é a biblioteca tabulate (Isso foi implementado pensando no docker, já que não tem como usar a extensão SQL Viewer na execução do container). Instale usando o prompt de comando com:  
+Por fim, instalar uma biblioteca adicional para exibir continuamente as informações de conta do banco, que é a biblioteca tabulate (Isso foi implementado pensando no docker, já que não tem como usar a extensão SQL Viewer na execução do container). Instale usando o prompt de comando com:  
 
     pip install tabulate
 
@@ -59,24 +59,24 @@ Dessa forma, basta acessar a rota no navegador (http://172.31.160.1:9999) para q
      
  * Selecionar a opção de operação (Estágio 1):
    - Fazer login:  
-     Após inserir suas credenciais, se login for feito com sucesso será exibido o saldo e a opção de demais operações, como transferência, saque e etc.
-     Se o login falhar, o usuário não tem acesso as demais operações de cliente do banco.
+     Após inserir suas credenciais, se o login for feito com sucesso será exibido o saldo e a opção de demais operações, como transferência, saque e etc.
+     Se o login falhar, o usuário não tem acesso às demais operações de cliente do banco.
      
    - Criar conta:  
-      O usuário pode escolher entre conta pessoa fisica individual (PFI), conta pessoa fisica conjunta (PFC) e conta juridica (PJ).  
-      O usuário pode criar apenas uma conta individual por banco com o seu CPF, e varias contas conjuntas, contanto que seja com titulares diferentes.  
-      Para conta juridica, também só é possivel criar uma conta com o mesmo CNPJ.
+      O usuário pode escolher entre conta pessoa física individual (PFI), conta pessoa física conjunta (PFC) e conta jurídica (PJ).  
+      O usuário pode criar apenas uma conta individual por banco com o seu CPF, e várias contas conjuntas, contanto que seja com titulares diferentes.  
+      Para conta jurídica, também só é possivel criar uma conta com o mesmo CNPJ.
      
   *  Selecionar a opção de operação (Estágio 2- pós login):  
      Após fazer o login as operações disponíveis na dashboard são:  
      - Fazer depósito:  
        O usuário pode digitar qualquer conta que deseja fazer o depósito, informar o valor e selecionar o banco de destino.
-       Caso a conta não seja encontrada ou ocorra um problema de comunicação com o banco de destino o depósito falha.
+       Caso a conta não seja encontrada ou ocorra um problema de comunicação com o banco de destino, o depósito falha.
        Se o valor do depósito for menor ou igual a 0, o mesmo não ocorre.
        
      - Realizar transferência TED:  
-       O usuário pode digitar qualquer conta que deseja fazer a transferência, informar o valor e selecionar o banco de destino. Se o saldo for suficiente a transação ocorre com sucesso.
-       Caso a conta não seja encontrada ou ocorra um problema de comunicação com o banco de destino o transação falha.
+       O usuário pode digitar qualquer conta que deseja fazer a transferência, informar o valor e selecionar o banco de destino. Se o saldo for suficiente a transação ocorre com sucesso.  
+       Caso a conta não seja encontrada ou ocorra um problema de comunicação com o banco de destino a transação falha.  
        Se o valor da transferência TED for menor ou igual a 0, a mesma não ocorre.
        
      - Realizar transferência PIX:  
@@ -91,7 +91,7 @@ Dessa forma, basta acessar a rota no navegador (http://172.31.160.1:9999) para q
      - Minhas chaves pix:  
        O usuário pode vizualizar suas chaves pix.
        O usuário pode cadastrar uma chave pix que não exista em outra conta.
-       Os tipos de chave são email, chave aléatória e telefone.
+       Os tipos de chave são email, chave aleatória e telefone.
        O usuário pode apagar qualquer chave pix que tenha registrado.
 
      - Sair:  
@@ -136,7 +136,7 @@ __INTRODUÇÃO:__
 
 * O app pode selecionar qual banco irá acessar, ele pode escolher entre Bradesco, Picpay e Neon.
 * Quando a operação de um banco tiver outro banco como destino, ele irá acessar as rotas dos outros bancos para poder realizar a mesma.
-* Todos as comunicações entre os componentes do diagrama ocorre via HTTP.
+* Todas as comunicações entre os componentes do diagrama ocorre via HTTP.
 
 
 
@@ -194,7 +194,7 @@ Colunas:
 
    
 4. Tabela Lock:  
-Descrição: Representa os bloqueios em recursos específicos para gerenciar concorrência (ex: Bloquear um conta através da agencia e conta).  
+Descrição: Representa os bloqueios em recursos específicos para gerenciar concorrência (ex: Bloquear um conta através da agência e conta).  
 Colunas:  
   id: Identificador único do bloqueio (chave primária).  
   resource: Recurso que está sendo bloqueado (único e não nulo).  
@@ -218,7 +218,7 @@ __Rotas do servidor:__
      - Se a conta for individual ou jurídica, ele recebe o CPF ou CNPJ e nome do titular. (Para conta jurídica o nome do titular irá representar a razão social da empresa ou organização).
 
 * Rota /depositar  
-  Essa rota permite que o usuário faça depositos em qualquer conta, em qualquer banco.  
+  Essa rota permite que o usuário faça depósitos em qualquer conta, em qualquer banco.  
   Recepção dos Dados: Recebe dados JSON do cliente contendo a agência de destino, conta de destino, o banco ao qual a conta pertence (banco de destino) e o valor a ser transferido.  
 
 * Rota /sacar  
@@ -226,7 +226,7 @@ __Rotas do servidor:__
   Recepção dos Dados: Recebe dados JSON do cliente contendo a agência, conta e valor.  
 
 * Rota /saldo  
-  Essa rota permite vizualizar o saldo da conta.  
+  Essa rota permite visualizar o saldo da conta.  
   Recepção dos Dados: Recebe dados JSON do cliente contendo a agência e conta.  
 
 * Rota /transferencia/ted/enviar  
@@ -352,14 +352,14 @@ C, para o banco D?__
 
     
 
-6. __Algoritmo está tratrando o problema na prática? A implementação do algoritmo está funcionamento corretamente?__
+6. __Algoritmo está tratrando o problema na prática? A implementação do algoritmo está funcionando corretamente?__
 
 - Na prática, o sistema implementado demonstra adequação ao contexto bancário, garantindo que operações como depósitos, transferências TED e PIX sejam tratadas de maneira confiável, mesmo sob cargas de trabalho distribuídas entre diferentes bancos.
 
 - Para ilustrar a eficácia dos locks implementados, considere o cenário onde uma conta está recebendo duas transferências simultâneas: uma de outra conta no mesmo banco e outra de um banco externo. Quando a conta recebe a primeira transferência, um lock é adquirido temporariamente para garantir que apenas uma transação modifique seu saldo por vez. Enquanto isso, a segunda transferência, vinda de um banco externo, tenta adquirir o mesmo lock.
 
 -  A tentativa de adquirir o lock é limitada a um timeout de 10 segundos. Se a conta consegue liberar o lock dentro desse período, a segunda transação poderá ser realizada. Caso contrário, se o lock não é liberado a tempo, a segunda transação é cancelada, garantindo que a integridade dos dados seja preservada e que apenas uma operação seja processada por vez para a conta em questão.
-- As rotas que usam o sistema de locks são: a rota de saque, deposito, transferencia ted e pix, a rota de receber transferência e descontar valores.
+- As rotas que usam o sistema de locks são: a rota de saque, deposito, transferência ted e pix, a rota de receber transferência e descontar valores.
 
 * Algoritmo de transferência PIX:  
   - O algoritmo da transferência PIX consegue descontar o valor de cada conta de origem e transferir o total para a conta de destino. Em caso de qualquer erro durante o processo, os saldos descontados são revertidos para garantir a consistência dos dados.
