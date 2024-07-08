@@ -238,8 +238,8 @@ __Rotas do servidor:__
   Recepção dos Dados: Recebe dados JSON do cliente contendo as contas de origem com suas informações de agência, conta, banco e valor a ser transferido de cada banco.
 
 * Rota /transferencia/receber  
-  Essa rota é a que fica responsável por receber depósitos ou transferência (TED ou PIX) de outros bancos.  
-  Recepção dos Dados: Recebe um JSON contendo o tipo de transferência (TED, PIX ou DEP para depósito) e o valor a ser transferido. Para transferências PIX, inclui a chave PIX do destinatário. Para transferências TED e depósitos, inclui o número da agência e o número da conta de destino.
+  Essa rota é a que fica responsável por receber depósitos, transferência (TED ou PIX) e valores revertidos de outros bancos.  
+  Recepção dos Dados: Recebe um JSON contendo o tipo de transferência (TED, PIX, DEP para depósito e REVERT para valores revertidos) e o valor a ser transferido. Para transferências PIX, inclui a chave PIX do destinatário. Para transferências TED, depósitos e reversão de saldo, inclui o número da agência e o número da conta de destino.
 
 * Rota /pix/chave  
   Essa rota permite que outros bancos verifiquem se uma chave PIX já está cadastrada no banco atual.  
@@ -248,10 +248,6 @@ __Rotas do servidor:__
 * Rota /transferencia/pix/descontar  
   Essa rota permite descontar saldo de uma conta específica no banco.  
   Recepção dos Dados: A rota recebe um JSON contendo o número da agência da conta, o número da conta e o valor a ser descontado.  
-
-* Rota /transferencia/pix/reverter  
-  Essa rota permite reverter o saldo de uma conta específica em caso de falha na transferência.  
-  Recepção dos Dados: A rota recebe um JSON contendo o número da agência da conta, o número da conta e o valor a ser revertido.
 
 * Rota /obter_contas_todos_bancos  
   Essa rota busca todas as contas de um mesmo titular em todos os bancos.  
@@ -317,7 +313,7 @@ C, para o banco D?__
   - /transferencia/pix/reverter
   - /obter_contas
 
-  - O HTTP é adequado para essa comunicação entre bancos por várias razões. Ele é um protocolo amplamente utilizado e padronizado, o que facilita a integração entre sistemas de diferentes bancos. Além disso, o HTTP é simples de implementar, permitindo a troca de dados estruturados em formatos JSON. Ele também é adequado para sistemas escaláveis e distribuídos, permitindo que os servidores dos bancos possam aumentar a capacidade de seus sistema conforme necessário. Ademais, o HTTP facilita a comunicação entre diferentes plataformas e tecnologias, assegurando que os bancos possam se comunicar de forma eficiente mesmo que usem sistemas internos diferentes. Essas características tornam o HTTP uma escolha ideal para a comunicação segura e eficiente entre os sistemas bancários.
+  - O HTTP é adequado para essa comunicação entre bancos por várias razões. Ele é um protocolo amplamente padronizado, o que facilita a integração entre sistemas de diferentes bancos. Além disso, o HTTP é simples de implementar, permitindo a troca de dados estruturados em formatos JSON. Ele também é adequado para sistemas escaláveis e distribuídos, permitindo que os servidores dos bancos possam aumentar a capacidade de seus sistemas conforme necessário.
 
 4. __Sincronização em um único servidor. Como tratou a concorrência em um único servidor, quando chegam mais de um pedido de transação a um único servidor?__
 -  A concorrência em um único servidor é tratada utilizando um mecanismo de bloqueio (lock) baseado em uma tabela de bloqueios (locks) no banco de dados. O objetivo é garantir que cada transação que afete uma conta específica seja processada de maneira segura, evitando inconsistências nos saldos das contas.
@@ -352,7 +348,7 @@ C, para o banco D?__
 
   - Na segunda fase, os valores são descontados das contas de origem, similar à fase de commit do Two-Phase Commit. Se houver qualquer erro durante o desconto de alguma conta, o processo entra em uma fase de abortar, revertendo os saldos já descontados e cancelando a transferência.
 
-  - Caso a fase de desconto ocorra com sucesso, a próxima etapa é direcionar o valor total das contas de origem para a conta de destino através da chave PIX. Se ocorrer algum erro na transferência, os valores das contas de origem são revertidos, garantindo a integridade das transações.
+  - Caso a fase de desconto ocorra com sucesso, a próxima etapa é direcionar o valor total das contas de origem para a conta de destino, através da chave PIX. Se ocorrer algum erro na transferência, os valores das contas de origem são revertidos, garantindo a integridade das transações.
 
     
 
@@ -380,7 +376,7 @@ C, para o banco D?__
 
 __Testes:__
 
-Foram realizados dois testes, um para a concorrência distribuída e outro para a concorrência em um único servidor.  
+Foram realizados dois testes, um para a concorrência distribuída e o outro para a concorrência em um único servidor.  
 
 _concorrencia_distribuida.py:_  
 
@@ -420,14 +416,14 @@ Após isso, observa-se que todas ocorreram com sucesso, ou seja, a concorrência
 * À medida que se aumenta o número de transferências, algumas podem começar a falhar devido ao bloqueio de contas.
 
 Ex:
-- Aumentando mais uma transferência pix (mesmo teste com o mais uma transferência).  
+- Aumentando mais uma transferência pix (mesmo teste com mais uma transferência).  
  
       Transferência PIX (http://172.31.160.1:9637): {'mensagem': 'Transferência PIX realizada com sucesso'}
       Transferência PIX (http://172.31.160.1:9637): {'mensagem': 'Transferência PIX realizada com sucesso'}
       Transferência PIX (http://172.31.160.1:9636): {'mensagem': 'Transferência PIX realizada com sucesso'}
       Transferência PIX (http://172.31.160.1:9635): {'erro': 'Falha na transferência PIX para o banco destino'}
   
-- Então, a última transferência falha devido ao bloqueio da conta de destino que está recebendo várias transferências concorrentes.
+- Então, a última transferência falha, devido ao bloqueio da conta de destino que está recebendo várias transferências concorrentes.
 
 * Verificação dos saldos após transferências:
   
@@ -442,5 +438,30 @@ Ex:
 Ou seja, as contas que falharam em transferir foram aquelas que estavam na transferência pix que não conseguiu adquirir o lock.
 
 _concorrencia_local.py:_ 
+
+No teste de concorrência em um único servidor, foram criadas três contas: uma conta conjunta entre os clientes 1 e 2, e duas contas individuais, cada uma pertencente aos clientes 1 e 2, respectivamente.  
+Inicialmente foi feito um depósito em cada conta no valor de 200 reais:
+
+      Depósito: {'mensagem': 'Depósito realizado com sucesso'}
+      Depósito: {'mensagem': 'Depósito realizado com sucesso'}
+      Depósito: {'mensagem': 'Depósito realizado com sucesso'}
+
+Depois, foi cadastrada uma chave pix na conta individual do cliente 2.
+
+      Cadastro de Chave PIX: {'mensagem': 'Chave PIX cadastrada com sucesso'}
+
+A seguir vieram as operações simultaneas:
+
+      Depósito: {'mensagem': 'Depósito realizado com sucesso'}  # Mais um depósito na conta conjunta no valor de 200 reais.
+      Saque: {'mensagem': 'Saque realizado com sucesso'} # Saque efetuado da conta conjunta no valor de 50 reais.
+      Transferência TED: {'mensagem': 'Transferência realizada com sucesso'} # Transferência TED da conta conjunta para a conta individual do cliente 2 no valor de 100 reais.
+      Transferência PIX: {'mensagem': 'Transferência PIX realizada com sucesso'} # Transferêcia pix das contas de origem do cliente 1 (conta conjunta e conta individual) no valor de 100 reais (50 reais de cada conta de origem).
+
+* Verificação dos saldos após operações:
+  
+      Agência: 3719 Conta: 524714 - Saldo esperado: 200 - Saldo real: 200.0
+      Agência: 3727 Conta: 654941 - Saldo esperado: 150 - Saldo real: 150.0
+      Agência: 3637 Conta: 703450 - Saldo esperado: 400 - Saldo real: 400.0
+
 
 __CONCLUSÃO:__
