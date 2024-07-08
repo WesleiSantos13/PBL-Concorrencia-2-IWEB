@@ -130,7 +130,7 @@ __INTRODUÇÃO:__
   Este projeto visa implementar um sistema de transações bancárias distribuídas, que inclui três bancos fictícios inspirados em instituições reais: Bradesco, Neon e PicPay. O servidor oferece funcionalidades essenciais para operações bancárias, como criação de contas, login, saques, transferência TED e PIX. Além disso, o sistema suporta depósitos e transferências tanto dentro do mesmo banco quanto para bancos de destino diferentes.
 
 
-                                                 #DIAGRAMA DO SISTEMA:
+                                                 DIAGRAMA DO SISTEMA:
 
    ![Diagrama de Comunicação](./Diagrama%20do%20sistema.png)
 
@@ -487,4 +487,9 @@ Ex:
   
    Observou-se que, apesar de duas transferências terem sido canceladas, os saldos permaneceram corretos.
 
-__CONCLUSÃO:__
+__CONCLUSÃO:__  
+
+Conclui-se que o projeto representou de forma robusta uma implementação de um sistema de transações bancárias distribuídas, abrangendo desde a criação e gerenciamento de contas até operações essenciais como depósitos, saques e transferências via TED e PIX entre diferentes instituições bancárias. Um aspecto crucial foi o mecanismo de controle de concorrência, que garante a consistência dos dados em todo o sistema. A utilização de locks em uma tabela de banco de dados desempenhou um papel significativo na gestão das múltiplas operações simultâneas, assegurando o controle das transações executadas.
+
+Após análises e testes, o sistema demonstra estar plenamente em conformidade com todos os requisitos estabelecidos. Os servidores responderam de maneira coerente tanto em cenários de queda quanto de retorno de conexão, garantindo a consistência dos dados e o controle efetivo da concorrência.  
+Um recurso fundamental foi a implementação de uma interface web, que não apenas facilitou os testes e a depuração, mas também melhorou significativamente a interatividade do sistema. Isso não só otimiza a usabilidade para os usuários, mas também reforça a acessibilidade do sistema como um todo.
