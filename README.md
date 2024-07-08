@@ -376,7 +376,10 @@ C, para o banco D?__
 - Sim, o tratamento da concorrência é feito utilizando locks, conforme mencionado anteriormente. Quando uma transação é iniciada, um lock é adquirido para a conta específica, impedindo outras operações na mesma conta. As demais transações tentam adquirir o lock durante um período de até 10 segundos. Se o tempo se esgotar, apenas a transação que conseguiu obter o lock primeiro é realizada. No entanto, se o lock for liberado dentro do prazo, as transações subsequentes que conseguirem adquirir o bloqueio também são realizadas. Dessa forma, o saldo das contas permanece correto, e os clientes conseguem realizar suas transações de maneira consistente.
 
 
-__Testes:__
-
+__Testes:__  
+Foram realizados dois testes um para a concorrência distribuida e outro para a concorrencia em um unico servidor.
+Na concorrencia distribuida foram criadas 7 contas no total uma delas sendo conjunta e outra a de destino.
+Inicialmente, foi feito um deposito em cada conta no valor de 200 reais, exceto a conta de destino.
+Depois, foi feita a 3 transferências pix e todas adquir 
 
 __CONCLUSÃO:__
