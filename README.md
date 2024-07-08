@@ -110,10 +110,10 @@ Para carregar as imagens do DockerHub:
 
 Para executar em qualquer máquina os containers:
 
-    docker run --network=host -it -e IP_neon=172.16.103.2 -e IP_picpay=172.16.103.3 wesleisantoss/bradesco  
-    docker run --network=host -it -e IP_bradesco=172.16.103.1 -e IP_picpay=172.16.103.3  wesleisantoss/neon
+    docker run --network=host -it -e IP_neon=172.16.103.2 -e IP_picpay=172.16.103.4 wesleisantoss/bradesco  
+    docker run --network=host -it -e IP_bradesco=172.16.103.1 -e IP_picpay=172.16.103.4  wesleisantoss/neon
     docker run --network=host -it -e IP_bradesco=172.16.103.1 -e IP_neon=172.16.103.2 wesleisantoss/picpay
-    docker run -p 9999:9999 -it -e IP_bradesco=172.16.103.1 -e IP_neon=172.16.103.2 -e IP_picpay=172.16.103.3 wesleisantoss/app
+    docker run -p 9999:9999 -it -e IP_bradesco=172.16.103.1 -e IP_neon=172.16.103.2 -e IP_picpay=172.16.103.4 wesleisantoss/app
 
 Para garantir o correto funcionamento do sistema, certifique-se de colocar os IPs corretos onde cada banco está sendo executado. Por exemplo, ao executar wesleisantoss/bradesco, defina IP_neon e IP_picpay com os IPs das máquinas onde os bancos Neon e PicPay estão rodando. Repita o mesmo processo para os demais bancos (wesleisantoss/neon e wesleisantoss/picpay). Depois, configure a aplicação (wesleisantoss/app) com os IPs de onde cada banco está executando usando as variáveis IP_bradesco, IP_neon e IP_picpay e então execute a aplicação.  
 
@@ -372,7 +372,8 @@ C, para o banco D?__
 - Sim, quando o banco perde a conexão, a aplicação perde o contato com o servidor. No entanto, isso não resulta em erros graves na aplicação devido aos tratamentos de erro implementados. A aplicação continua tentando acessar as funcionalidades do banco, mas não consegue até que a conexão seja restabelecida. Quando a conexão volta, o sistema retorna ao funcionamento normal, permitindo que as operações sejam retomadas sem perda de dados ou inconsistências significativas.
 
   
-8. __Pelo menos uma transação concorrente é realizada ? Como foi tratado o caso em que mais de duas transações ocorrem no mesmo banco de forma concorrente? O saldo fica correto? Os clientes conseguem realizar as transações?__  
+8. __Pelo menos uma transação concorrente é realizada ? Como foi tratado o caso em que mais de duas transações ocorrem no mesmo banco de forma concorrente? O saldo fica correto? Os clientes conseguem realizar as transações?__
+   
 - Sim, o tratamento da concorrência é feito utilizando locks, conforme mencionado anteriormente. Quando uma transação é iniciada, um lock é adquirido para a conta específica, impedindo outras operações na mesma conta. As demais transações tentam adquirir o lock durante um período de até 10 segundos. Se o tempo se esgotar, apenas a transação que conseguiu obter o lock primeiro é realizada. No entanto, se o lock for liberado dentro do prazo, as transações subsequentes que conseguirem adquirir o bloqueio também são realizadas. Dessa forma, o saldo das contas permanece correto, e os clientes conseguem realizar suas transações de maneira consistente.
 
 
@@ -392,11 +393,11 @@ Inicialmente, foi feito um depósito em cada conta no valor de 200 reais, exceto
     Depósito: {'mensagem': 'Depósito realizado com sucesso'}
     Depósito: {'mensagem': 'Depósito realizado com sucesso'}
     
-Cadastro a chave uma chave pix no conta de destino:
+Cadastrando uma chave pix na conta de destino:
 
     Cadastro de Chave PIX: {'mensagem': 'Chave PIX cadastrada com sucesso'}
     
-Depois, foi feita 3 transferências pix para uma mesma conta para uma mesma conta do banco picpay:
+Depois, foram feitas 3 transferências pix para uma mesma conta para uma mesma conta do banco picpay:
 
     Transferência PIX (http://172.31.160.1:9637): {'mensagem': 'Transferência PIX realizada com sucesso'}
     Transferência PIX (http://172.31.160.1:9635): {'mensagem': 'Transferência PIX realizada com sucesso'}
@@ -415,7 +416,7 @@ Depois, foi feita 3 transferências pix para uma mesma conta para uma mesma cont
 Após isso, observa-se que todas ocorreram com sucesso, ou seja, a concorrência foi tratada corretamente.  
 É importante ressaltar que todas essas transferências foram realizadas dos três bancos (Bradesco, Neon e PicPay) para um único banco (PicPay).
 
-* À medida que se aumenta o número de transferências, algumas começam a falhar devido ao bloqueio de contas.
+* À medida que se aumenta o número de transferências, algumas podem começar a falhar devido ao bloqueio de contas.
 
 Ex:
 - Aumentando mais uma transferência pix (mesmo teste com o mais uma transferência).  
@@ -429,13 +430,16 @@ Ex:
 
 * Verificação dos saldos após transferências:
   
-      Agência: 3689 Conta: 493661 - Saldo esperado: 100 - Saldo real: 150.0 # A falha veio da transferência pix dessa conta
-      Agência: 2306 Conta: 597990 - Saldo esperado: 150 - Saldo real: 200.0 # A falha veio da transferência pix dessa conta
+      Agência: 3689 Conta: 493661 - Saldo esperado: 100 - Saldo real: 150.0 # A falha ocorreu na transferência PIX desta conta.
+      Agência: 2306 Conta: 597990 - Saldo esperado: 150 - Saldo real: 200.0 # A falha ocorreu na transferência PIX desta conta.
       Agência: 3047 Conta: 491849 - Saldo esperado: 100 - Saldo real: 100.0
       Agência: 4774 Conta: 503156 - Saldo esperado: 100 - Saldo real: 100.0
       Agência: 2323 Conta: 881032 - Saldo esperado: 50 - Saldo real: 50.0
       Agência: 4586 Conta: 368771 - Saldo esperado: 50 - Saldo real: 50.0
       Agência: 4464 Conta: 531200 - Saldo esperado: 650 - Saldo real: 550.0 # Conta de destino
 
-Ou seja, as contas que falharam em transferir foram aquela que estavam na transferencia pix que falhou.
+Ou seja, as contas que falharam em transferir foram aquelas que estavam na transferência pix que não conseguiu adquirir o lock.
+
+_concorrencia_local.py:_ 
+
 __CONCLUSÃO:__
