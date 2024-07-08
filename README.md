@@ -439,7 +439,7 @@ Ou seja, as contas que falharam em transferir foram aquelas que estavam na trans
 
 _concorrencia_local.py:_ 
 
-No teste de concorrência em um único servidor, foram criadas três contas: uma conta conjunta entre os clientes 1 e 2, e duas contas individuais, cada uma pertencente aos clientes 1 e 2, respectivamente.  
+No teste de concorrência em um único servidor, foram criadas três contas no banco bradesco: uma conta conjunta entre os clientes 1 e 2, e duas contas individuais, cada uma pertencente aos clientes 1 e 2, respectivamente.  
 Inicialmente foi feito um depósito em cada conta no valor de 200 reais:
 
       Depósito: {'mensagem': 'Depósito realizado com sucesso'}
@@ -463,5 +463,8 @@ A seguir vieram as operações simultaneas:
       Agência: 3727 Conta: 654941 - Saldo esperado: 150 - Saldo real: 150.0
       Agência: 3637 Conta: 703450 - Saldo esperado: 400 - Saldo real: 400.0
 
+Após isso, observou-se que todas as operações ocorreram com sucesso, indicando que a concorrência foi tratada corretamente.  
+A conta conjunta, que teve o maior número de operações, apresentou um saldo coerente.  
+Assim como no teste de concorrência distribuída, à medida que o número de operações aumenta, a probabilidade de uma transação ser cancelada devido ao bloqueio de recursos também aumenta. 
 
 __CONCLUSÃO:__
