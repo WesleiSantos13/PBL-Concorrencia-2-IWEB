@@ -449,7 +449,7 @@ Depois, foi cadastrada uma chave pix na conta individual do cliente 2.
 
       Cadastro de Chave PIX: {'mensagem': 'Chave PIX cadastrada com sucesso'}
 
-A seguir vieram as operações simultaneas:
+A seguir, vieram as operações simultaneas:
 
       Depósito: {'mensagem': 'Depósito realizado com sucesso'}  # Mais um depósito na conta conjunta no valor de 200 reais.
       Saque: {'mensagem': 'Saque realizado com sucesso'} # Saque efetuado da conta conjunta no valor de 50 reais.
