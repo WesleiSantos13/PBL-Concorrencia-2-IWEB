@@ -76,7 +76,7 @@ Dessa forma, basta acessar a rota no navegador (http://172.31.160.1:9999) para q
        
      - Realizar transferência TED:  
        O usuário pode digitar qualquer conta que deseja fazer a transferência, informar o valor e selecionar o banco de destino. Se o saldo for suficiente a transação ocorre com sucesso.  
-       Caso a conta não seja encontrada ou ocorra um problema de comunicação com o banco de destino a transação falha.  
+       Caso a conta não seja encontrada ou ocorra um problema de comunicação com o banco de destino, a transação falha.  
        Se o valor da transferência TED for menor ou igual a 0, a mesma não ocorre.
        
      - Realizar transferência PIX:  
@@ -121,13 +121,13 @@ Para garantir o correto funcionamento do sistema, certifique-se de colocar os IP
 
 * Exemplo: 
 
-   Se a url for http://172.17.0.2:9999 colocando o ip da máquina onde o container está executando, a nova url ficará mais ou menos assim:
+   Se a url do app for http://172.17.0.2:9999 colocando o ip da máquina onde o container está executando, a nova url ficará mais ou menos assim:
 
       http://172.16.103.4:9999/
 
 __INTRODUÇÃO:__  
 
-  Este projeto visa implementar um sistema de transações bancárias distribuídas, que inclui três bancos fictícios inspirados em instituições reais: Bradesco, Neon e PicPay. O servidor oferece funcionalidades essenciais para operações bancárias, como criação de contas, login, saques, transferência TED e PIX. Além disso, o sistema suporta depósitos e transferências tanto dentro do mesmo banco quanto para bancos de destino diferentes.
+  Este projeto visa implementar um sistema de transações bancárias distribuídas, que inclui três bancos fictícios inspirados em instituições reais: Bradesco, Neon e PicPay. O servidor oferece funcionalidades essenciais para operações bancárias, como criação de contas, login, saques, transferência TED e PIX. Além disso, o sistema suporta depósitos e transferências tanto dentro do mesmo banco, quanto para bancos de destino diferentes.
 
 
                                                  DIAGRAMA DO SISTEMA:
@@ -143,7 +143,7 @@ __INTRODUÇÃO:__
 * __FUNCIONALIDADES:__
 
   __FILES:__ _Bradesco.py, Neon.py e Picpay.py_
-Esses files são destinados para os servidores do banco, eles possuem o mesmo código fonte, com apenas algumas alterações na porta, ID e o nome do banco de dados, conforme abaixo.
+Esses files são destinados para os servidores do banco, eles possuem o mesmo código fonte, com apenas algumas alterações na porta, ID e o nome do banco de dados, conforme abaixo:
 
 _Bradesco.py:__  
 * app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bradesco.db'
@@ -235,7 +235,7 @@ __Rotas do servidor:__
 
 * Rota /transferencia/pix/enviar  
   Essa rota permite que o cliente envie valores de diferentes contas vinculadas ao seu CPF para outra conta, por meio da chave PIX.  (N para 1)  
-  Recepção dos Dados: Recebe dados JSON do cliente contendo as contas de origem com suas informações de agência, conta, banco e valor a ser transferido de cada banco.
+  Recepção dos Dados: Recebe dados JSON do cliente contendo as contas de origem com suas informações de agência, conta, banco, valor a ser transferido de cada banco e a chave pix de destino.
 
 * Rota /transferencia/receber  
   Essa rota é a que fica responsável por receber depósitos, transferência (TED ou PIX) e valores revertidos de outros bancos.  
@@ -310,7 +310,6 @@ C, para o banco D?__
   - /transferencia/pix/enviar
   - /transferencia/receber
   - /transferencia/pix/descontar
-  - /transferencia/pix/reverter
   - /obter_contas
 
   - O HTTP é adequado para essa comunicação entre bancos por várias razões. Ele é um protocolo amplamente padronizado, o que facilita a integração entre sistemas de diferentes bancos. Além disso, o HTTP é simples de implementar, permitindo a troca de dados estruturados em formatos JSON. Ele também é adequado para sistemas escaláveis e distribuídos, permitindo que os servidores dos bancos possam aumentar a capacidade de seus sistemas conforme necessário.
@@ -339,7 +338,7 @@ C, para o banco D?__
 5. __Algoritmo da concorrencia distribuída está teoricamente bem empregado? Qual algoritmo foi utilizado? Está correto para a solução?__
   - O sistema utiliza um mecanismo de locks distribuídos para gerenciar o acesso concorrente às contas bancárias. Cada conta é associada a uma chave de bloqueio (lock_key), garantindo que apenas um processo por vez possa modificar o saldo da conta. Esse método é fundamental para manter a consistência dos dados no ambiente distribuído, impedindo condições de corrida que poderiam ocorrer se múltiplos processos tentassem modificar o mesmo recurso simultaneamente.
     
-  - Por exemplo, ao realizar uma transferência TED do banco Bradesco para o banco Neon, a rota /transferencia/receber no banco Neon escuta e processa a transação recebida. Antes de modificar o saldo da conta de destino, a rota adquire um lock específico para essa conta (representado pela lock_key associada à agência e conta). Esse lock é crucial para garantir que outras transações ou operações que afetem a mesma conta sejam bloqueadas temporariamente, assegurando a integridade dos dados durante a modificação do saldo.
+  - Por exemplo, ao realizar uma transferência TED do banco Bradesco para o banco Neon, a rota /transferencia/receber no banco Neon escuta e processa a transação recebida. Antes de modificar o saldo da conta de destino, a rota adquire um lock específico para essa conta (representado pela lock_key associada à agência e conta). Esse lock é importante para garantir que outras transações ou operações que afetem a mesma conta sejam bloqueadas temporariamente, assegurando a integridade dos dados durante a modificação do saldo.
     
   - Então, cada banco é responsável por gerenciar seus próprios locks, garantindo que a concorrência seja controlada localmente. Isso significa que a rota /transferencia/receber em cada banco atua de forma distribuída, bloqueando apenas as contas relevantes para as transações que chegam.
 
@@ -366,12 +365,12 @@ C, para o banco D?__
   
 7. __Tratamento da confiabilidade. Quando um dos bancos perde a conexão, o sistema continua funcionando corretamente? E quando o banco retorna à conexão?__
    
-- Sim, quando o banco perde a conexão, a aplicação perde o contato com o servidor. No entanto, isso não resulta em erros graves na aplicação devido aos tratamentos de erro implementados. A aplicação continua tentando acessar as funcionalidades do banco, mas não consegue até que a conexão seja restabelecida. Quando a conexão volta, o sistema retorna ao funcionamento normal, permitindo que as operações sejam retomadas sem perda de dados ou inconsistências significativas.
+- Sim, quando o banco perde a conexão, a aplicação perde o contato com o servidor. No entanto, isso não resulta em erros graves na aplicação devido aos tratamentos de erro implementados. A aplicação continua tentando acessar as funcionalidades do banco, mas não consegue até que a conexão seja restabelecida. Quando a conexão volta, o sistema retorna ao funcionamento normal, permitindo que as operações sejam retomadas sem perda de dados ou inconsistências.
 
   
 8. __Pelo menos uma transação concorrente é realizada ? Como foi tratado o caso em que mais de duas transações ocorrem no mesmo banco de forma concorrente? O saldo fica correto? Os clientes conseguem realizar as transações?__
    
-- Sim, o tratamento da concorrência é feito utilizando locks, conforme mencionado anteriormente. Quando uma transação é iniciada, um lock é adquirido para a conta específica, impedindo outras operações na mesma conta. As demais transações tentam adquirir o lock durante um período de até 10 segundos. Se o tempo se esgotar, apenas a transação que conseguiu obter o lock primeiro é realizada. No entanto, se o lock for liberado dentro do prazo, as transações subsequentes que conseguirem adquirir o bloqueio também são realizadas. Dessa forma, o saldo das contas permanece correto, e os clientes conseguem realizar suas transações de maneira consistente.
+- Sim, o tratamento de toda a concorrência é feito utilizando locks, conforme mencionado anteriormente. Quando uma transação é iniciada, um lock é adquirido para a conta específica, impedindo outras operações na mesma conta. As demais transações tentam adquirir o lock durante um período de até 10 segundos. Se o tempo se esgotar, apenas a transação que conseguiu obter o lock primeiro é realizada. No entanto, se o lock for liberado dentro do prazo, as transações subsequentes que conseguirem adquirir o bloqueio também são realizadas. Dessa forma, o saldo das contas permanece correto, e os clientes conseguem realizar suas transações de maneira consistente.
 
 
 __Testes:__
@@ -394,7 +393,7 @@ Cadastrando uma chave pix na conta de destino:
 
     Cadastro de Chave PIX: {'mensagem': 'Chave PIX cadastrada com sucesso'}
     
-Depois, foram feitas 3 transferências pix para uma mesma conta para uma mesma conta do banco picpay:
+Depois, foram feitas 3 transferências pix para uma mesma conta do banco picpay:
 
     Transferência PIX (http://172.31.160.1:9637): {'mensagem': 'Transferência PIX realizada com sucesso'}
     Transferência PIX (http://172.31.160.1:9635): {'mensagem': 'Transferência PIX realizada com sucesso'}
@@ -413,7 +412,7 @@ Depois, foram feitas 3 transferências pix para uma mesma conta para uma mesma c
 Após isso, observa-se que todas ocorreram com sucesso, ou seja, a concorrência foi tratada corretamente.  
 É importante ressaltar que todas essas transferências foram realizadas dos três bancos (Bradesco, Neon e PicPay) para um único banco (PicPay).
 
-* À medida que se aumenta o número de transferências, algumas podem começar a falhar devido ao bloqueio de contas.
+* À medida que aumenta o número de transferências, algumas podem começar a falhar devido ao bloqueio de contas.
 
 Ex:
 - Aumentando mais uma transferência pix (mesmo teste com mais uma transferência).  
@@ -435,7 +434,7 @@ Ex:
       Agência: 4586 Conta: 368771 - Saldo esperado: 50 - Saldo real: 50.0
       Agência: 4464 Conta: 531200 - Saldo esperado: 650 - Saldo real: 550.0 # Conta de destino
 
-Ou seja, as contas que falharam em transferir foram aquelas que estavam na transferência pix que não conseguiu adquirir o lock.
+Ou seja, as contas que falharam em transferir foram aquelas que estavam na transferência pix, que não conseguiu adquirir o lock, porém os saldos ficaram corretos.
 
 _concorrencia_local.py:_ 
 
@@ -465,7 +464,7 @@ A seguir vieram as operações simultaneas:
 
 Após isso, observou-se que todas as operações ocorreram com sucesso, indicando que a concorrência foi tratada corretamente.  
 A conta conjunta, que teve o maior número de operações, apresentou um saldo coerente.  
-Assim como no teste de concorrência distribuída, à medida que o número de operações aumenta, a probabilidade de uma transação ser cancelada devido ao bloqueio de recursos também aumenta. 
+Assim como no teste de concorrência distribuída, à medida que o número de operações aumenta, a probabilidade de uma transação ser cancelada devido ao bloqueio de recursos, também aumenta. 
 
 Ex:
 - Aumentando mais duas transferência pix (mesmo teste com mais duas transferência).
@@ -491,5 +490,5 @@ __CONCLUSÃO:__
 
 Conclui-se que o projeto representou de forma robusta uma implementação de um sistema de transações bancárias distribuídas, abrangendo desde a criação e gerenciamento de contas até operações essenciais como depósitos, saques e transferências via TED e PIX entre diferentes instituições bancárias. Um aspecto crucial foi o mecanismo de controle de concorrência, que garante a consistência dos dados em todo o sistema. A utilização de locks em uma tabela de banco de dados desempenhou um papel significativo na gestão das múltiplas operações simultâneas, assegurando o controle das transações executadas.
 
-Após análises e testes, o sistema demonstra estar plenamente em conformidade com todos os requisitos estabelecidos. Os servidores responderam de maneira coerente tanto em cenários de queda quanto de retorno de conexão, garantindo a consistência dos dados e o controle efetivo da concorrência.  
+Após análises e testes, o sistema demonstra estar plenamente em conformidade com todos os requisitos estabelecidos. Os servidores responderam de maneira coerente tanto em cenários de queda, quanto de retorno de conexão, garantindo a consistência dos dados.  
 Um recurso fundamental foi a implementação de uma interface web, que não apenas facilitou os testes e a depuração, mas também melhorou significativamente a interatividade do sistema. Isso não só otimiza a usabilidade para os usuários, mas também reforça a acessibilidade do sistema como um todo.
